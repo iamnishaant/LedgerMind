@@ -1,0 +1,43 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Dependencies and local runtimes
+node_modules/
+venv/
+.venv/
+env/
+
+# Build outputs and caches
+.next/
+out/
+build/
+dist/
+coverage/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs and generated output
+*.log
+output.txt
+
+# Demo/sample data
+backend/sample_receipts/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local reports and backups
+AI_FinanceOS_Final_Report*.docx
+*_backup.*

@@ -1,0 +1,198 @@
+"""
+LangGraph Orchestrator — Phase 1 + Phase 2 ready
+Graph: receipt uploaded → OCR → (human review?) → Accounting → save to DB
+
+State passes only references (receipt_id, business_id) + compact JSON payload
+to keep graph state lean as agent count grows (Phase 9 recommendation).
+"""
+from __future__ import annotations
+
+from typing import TypedDict, Optional
+from langgraph.graph import StateGraph, END
+
+from app.agents.ocr_agent import run_ocr_agent, OCRResult
+from app.agents.accounting_agent import run_accounting_agent
+from app.core.supabase import get_supabase
+from app.core.config import settings
+
+
+# ── Graph State ──────────────────────────────────────────────
+
+class ReceiptState(TypedDict):
+    # References only (keep state lean)
+    receipt_id: str
+    business_id: str
+    uploaded_by: str
+
+    # Compact payload from each agent
+    image_bytes: Optional[bytes]          # passed only during OCR step, then cleared
+    ocr_result: Optional[dict]
+    accounting_result: Optional[dict]
+
+    # Control flow
+    needs_human_review: bool
+    error: Optional[str]
+    status: str                            # 'processing' | 'needs_review' | 'completed' | 'failed'
+
+
+# ── Node: OCR ────────────────────────────────────────────────
+
+async def ocr_node(state: ReceiptState) -> ReceiptState:
+    """Run PaddleOCR + LLM classification on the uploaded receipt."""
+    try:
+        image_bytes = state.get("image_bytes")
+        if not image_bytes:
+            # Fetch from Supabase Storage if not in state
+            supabase = get_supabase()
+            receipt = supabase.table("receipts").select("storage_path").eq("id", state["receipt_id"]).single().execute()
+            storage_path = receipt.data["storage_path"]
+            response = supabase.storage.from_("receipts").download(storage_path)
+            image_bytes = response
+
+        result: OCRResult = await run_ocr_agent(image_bytes)
+
+        # Update receipt status in DB
+        supabase = get_supabase()
+        supabase.table("receipts").update({
+            "status": "needs_review" if result.needs_human_review else "processing",
+            "confidence": result.confidence,
+            "raw_text": result.raw_text,
+        }).eq("id", state["receipt_id"]).execute()
+
+        # Log agent run
+        supabase.table("agent_runs").insert({
+            "business_id": state["business_id"],
+            "receipt_id": state["receipt_id"],
+            "agent_name": "ocr_agent",
+            "status": "completed",
+            "output_payload": result.model_dump(),
+        }).execute()
+
+        return {
+            **state,
+            "image_bytes": None,           # clear bytes from state after OCR
+            "ocr_result": result.model_dump(),
+            "needs_human_review": result.needs_human_review,
+            "status": "needs_review" if result.needs_human_review else "processing",
+        }
+    except Exception as e:
+        return {**state, "error": str(e), "status": "failed"}
+
+
+# ── Node: Human Review (breakpoint) ─────────────────────────
+
+async def human_review_node(state: ReceiptState) -> ReceiptState:
+    """
+    LangGraph breakpoint — graph execution pauses here when confidence < threshold.
+    Frontend polls receipt status; user corrects data and resumes via API.
+    This node itself is a no-op; the interrupt() mechanism halts graph here.
+    """
+    # This will be interrupted by LangGraph's interrupt mechanism
+    # Resumed via: graph.update_state(config, corrected_data) + graph.invoke(...)
+    return {**state, "status": "awaiting_human"}
+
+
+# ── Node: Accounting Agent ───────────────────────────────────
+
+async def accounting_node(state: ReceiptState) -> ReceiptState:
+    """Categorize, book the expense, and detect duplicates."""
+    try:
+        result = await run_accounting_agent(
+            receipt_id=state["receipt_id"],
+            business_id=state["business_id"],
+            ocr_result=state.get("ocr_result", {}),
+        )
+
+        supabase = get_supabase()
+        supabase.table("agent_runs").insert({
+            "business_id": state["business_id"],
+            "receipt_id": state["receipt_id"],
+            "agent_name": "accounting_agent",
+            "status": "completed",
+            "output_payload": result,
+        }).execute()
+
+        supabase.table("receipts").update({"status": "completed"}).eq("id", state["receipt_id"]).execute()
+
+        return {**state, "accounting_result": result, "status": "completed"}
+    except Exception as e:
+        return {**state, "error": str(e), "status": "failed"}
+
+
+# ── Routing ──────────────────────────────────────────────────
+
+def route_after_ocr(state: ReceiptState) -> str:
+    if state["status"] == "failed":
+        return "end"
+    if state["needs_human_review"]:
+        return "human_review"
+    return "accounting"
+
+
+# ── Build Graph ──────────────────────────────────────────────
+
+def build_orchestrator() -> StateGraph:
+    graph = StateGraph(ReceiptState)
+
+    graph.add_node("ocr", ocr_node)
+    graph.add_node("human_review", human_review_node)
+    graph.add_node("accounting", accounting_node)
+
+    graph.set_entry_point("ocr")
+
+    graph.add_conditional_edges("ocr", route_after_ocr, {
+        "human_review": "human_review",
+        "accounting": "accounting",
+        "end": END,
+    })
+
+    # After human review → accounting
+    graph.add_edge("human_review", "accounting")
+    graph.add_edge("accounting", END)
+
+    return graph
+
+
+# ── Checkpointer + compiled graph (singleton) ────────────────
+#
+# A checkpointer is REQUIRED for the human-in-the-loop breakpoint to work:
+# it persists graph state at `interrupt_before=["human_review"]` so the
+# /approve endpoint can later resume the same thread.
+#
+# Production: shared Postgres checkpointer (DATABASE_URL) → durable across
+# restarts, matching the architecture review's "durable execution" goal.
+# Dev fallback: in-memory saver (state lives only in this process).
+
+_compiled_graph = None
+_checkpointer_cm = None   # kept alive so the connection pool isn't GC'd
+
+
+async def _init_checkpointer():
+    """Postgres checkpointer if DATABASE_URL is set, else in-memory fallback."""
+    global _checkpointer_cm
+    if settings.DATABASE_URL:
+        try:
+            from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+            _checkpointer_cm = AsyncPostgresSaver.from_conn_string(settings.DATABASE_URL)
+            saver = await _checkpointer_cm.__aenter__()
+            await saver.setup()
+            print("🗄️  LangGraph checkpointer: Postgres (durable)")
+            return saver
+        except Exception as e:  # missing psycopg / bad URL → don't crash the app
+            print(f"⚠️  Postgres checkpointer unavailable ({e}); using in-memory.")
+
+    from langgraph.checkpoint.memory import MemorySaver
+    print("🗄️  LangGraph checkpointer: in-memory (dev only — not durable)")
+    return MemorySaver()
+
+
+async def get_graph():
+    """Return the shared compiled orchestrator graph (built once)."""
+    global _compiled_graph
+    if _compiled_graph is None:
+        checkpointer = await _init_checkpointer()
+        _compiled_graph = build_orchestrator().compile(
+            checkpointer=checkpointer,
+            interrupt_before=["human_review"],   # pause before human_review node
+        )
+    return _compiled_graph
