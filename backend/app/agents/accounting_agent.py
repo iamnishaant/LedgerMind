@@ -4,6 +4,7 @@ Categorizes expenses, detects duplicates, and creates expense records in Supabas
 """
 from __future__ import annotations
 import json
+import logging
 from datetime import date, datetime, timedelta
 from typing import Optional
 
@@ -13,6 +14,8 @@ from app.core.config import settings
 from app.core.llm import get_chat_model
 from app.core.supabase import get_supabase
 from app.agents.gst_agent import evaluate_itc
+
+logger = logging.getLogger(__name__)
 
 
 # ── Date normalization ───────────────────────────────────────
@@ -89,6 +92,8 @@ async def _classify_expense(ocr_result: dict) -> dict:
         })
         return _parse_json(result.content)
     except Exception:
+        logger.exception("Expense classification failed for vendor=%r — falling back to 'Other'",
+                          ocr_result.get("vendor_name"))
         return {"category": "Other", "description": "", "is_business_expense": True}
 
 
@@ -116,6 +121,8 @@ def _detect_duplicate(business_id: str, amount: float, vendor_name: str, expense
         result = query.limit(1).execute()
         return len(result.data) > 0
     except Exception:
+        logger.exception("Duplicate check failed for business_id=%r vendor=%r — assuming not a duplicate",
+                          business_id, vendor_name)
         return False
 
 

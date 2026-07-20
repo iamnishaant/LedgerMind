@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, Minus, Flame, CalendarClock, LineChart as Lin
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { Reveal, Stagger, StaggerItem, AnimatedNumber } from "@/components/motion/Primitives";
 import { useBusiness } from "@/lib/business-context";
+import { monthLabel, buildForecastChartData } from "@/lib/forecast-chart";
 
 interface Forecast {
   history: { month: string; total: number; partial: boolean }[];
@@ -18,9 +19,6 @@ interface Forecast {
   next_month_projection: number;
   current_month_run_rate: number;
 }
-
-const monthLabel = (ym: string) =>
-  new Date(`${ym}-01T00:00:00`).toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
 
 const TREND = {
   rising: { color: "#ef4444", label: "Rising", icon: TrendingUp },
@@ -59,14 +57,7 @@ export default function ForecastsPage() {
     })();
   }, [businessId, authedFetch]);
 
-  // Build a single continuous series: actual for the past, projected for the future,
-  // joined at the last historical point so the dashed line connects cleanly.
-  const chart: { month: string; actual: number | null; projected: number | null }[] = [];
-  if (data) {
-    data.history.forEach(h => chart.push({ month: monthLabel(h.month), actual: h.total, projected: null }));
-    if (chart.length) chart[chart.length - 1].projected = data.history[data.history.length - 1].total;
-    data.forecast.forEach(f => chart.push({ month: monthLabel(f.month), actual: null, projected: f.projected }));
-  }
+  const chart = data ? buildForecastChartData(data.history, data.forecast) : [];
 
   const trend = data ? TREND[data.trend] : TREND.stable;
   const TrendIcon = trend.icon;

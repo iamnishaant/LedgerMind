@@ -11,6 +11,7 @@ the frontend can render it as real UI instead of parsing prose.
 from __future__ import annotations
 
 import json
+import logging
 from calendar import monthrange
 from datetime import date
 
@@ -20,6 +21,8 @@ from app.core.llm import get_chat_model
 from app.core.supabase import get_supabase
 from app.agents.forecast_agent import build_forecast
 from app.agents.gst_agent import build_gst_summary
+
+logger = logging.getLogger(__name__)
 
 
 def _current_month_summary(business_id: str) -> dict:
@@ -108,6 +111,8 @@ async def run_cfo_agent(business_id: str) -> dict:
     try:
         brief = _parse_json(result.content)
     except Exception:
+        logger.exception("CFO brief JSON parse failed for business_id=%r — raw content: %.500r",
+                          business_id, result.content)
         brief = {"headline": "Couldn't generate a structured brief this time — try again.",
                   "risks": [], "opportunities": [], "actions": []}
     return {"brief": brief, "metrics": metrics}

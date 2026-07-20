@@ -1,0 +1,55 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      # SUPABASE_URL / SERVICE_KEY / ANON_KEY have no defaults in Settings(),
+      # so pydantic-settings fails to construct at all without them — these
+      # placeholders exist purely so pure-logic tests (test_gst_agent.py,
+      # test_ocr_parsing.py) always run. DB-backed tests (test_auth.py,
+      # test_forecast_agent.py, test_automations_sync.py) self-skip cleanly
+      # via qa_business's pytest.skip() the instant a real API call fails
+      # against a placeholder URL — they don't need special-casing here.
+      #
+      # To unlock the DB-backed tests in CI, set these as real GitHub Actions
+      # secrets (repo Settings → Secrets and variables → Actions):
+      #   SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
+      # Optionally also DATABASE_URL and TOKEN_ENCRYPTION_KEY to unlock the
+      # checkpointer-durability tests (marked @pytest.mark.live_db and skip
+      # on their own if DATABASE_URL is blank).
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://placeholder.supabase.co' }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY || 'placeholder' }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'placeholder' }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL || '' }}
+      TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY || '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements-test.txt
+
+      # requirements-test.txt deliberately excludes paddleocr/paddlepaddle/
+      # opencv — ocr_agent.py's PaddleOCR import is lazy (deferred into
+      # get_ocr_engine()), so none of these tests need that heavy, slow
+      # dependency chain installed. Real OCR-against-images testing is
+      # intentionally separate (backend/scripts/verify_ocr.py) and not run
+      # on every push.
+      - name: Install test dependencies
+        run: pip install -r requirements-test.txt
+
+      - name: Run tests
+        run: pytest tests/ -v

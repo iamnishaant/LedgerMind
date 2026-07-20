@@ -3,13 +3,14 @@ Chat API — Phase 4 (AI Chat)
 POST /api/v1/chat          → ask a question; returns a grounded answer
 GET  /api/v1/chat/history  → load recent conversation for a business+user
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 
 from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
 
 from app.core.supabase import get_supabase
 from app.core.auth import get_current_user, ensure_owns_business
+from app.core.limiter import limiter
 from app.agents.chat_agent import run_chat_agent
 
 router = APIRouter()
@@ -41,7 +42,8 @@ async def get_history(business_id: str, limit: int = 30, user: dict = Depends(ge
 
 
 @router.post("")
-async def chat(payload: ChatIn, user: dict = Depends(get_current_user)):
+@limiter.limit("15/minute")
+async def chat(request: Request, payload: ChatIn, user: dict = Depends(get_current_user)):
     ensure_owns_business(payload.business_id, user["id"])
     if not payload.message.strip():
         raise HTTPException(status_code=400, detail="Empty message")

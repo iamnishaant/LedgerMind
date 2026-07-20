@@ -34,14 +34,17 @@ async def upload_receipt(
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    receipt_id = await ingest_receipt(
-        business_id=business_id,
-        uploaded_by=uploaded_by,
-        file_bytes=file_bytes,
-        filename=file.filename or "receipt",
-        content_type=file.content_type,
-        source="manual",
-    )
+    try:
+        receipt_id = await ingest_receipt(
+            business_id=business_id,
+            uploaded_by=uploaded_by,
+            file_bytes=file_bytes,
+            filename=file.filename or "receipt",
+            content_type=file.content_type,
+            source="manual",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     background_tasks.add_task(
         run_ingest_pipeline,

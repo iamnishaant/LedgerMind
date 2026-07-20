@@ -74,6 +74,11 @@ class Settings(BaseSettings):
     # Agent thresholds
     OCR_CONFIDENCE_THRESHOLD: float = 0.85   # below this → human review
 
+    # Upload size cap — the frontend UI claims "max 10MB" but nothing enforced it
+    # server-side; without this a large/malicious file flows straight into
+    # Storage, then PaddleOCR, then the vision LLM before anything would reject it.
+    MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024
+
     class Config:
         env_file = ".env"
         case_sensitive = True

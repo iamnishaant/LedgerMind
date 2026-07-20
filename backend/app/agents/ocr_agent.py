@@ -11,17 +11,22 @@ Design principles (from architecture review):
 import re
 import io
 import base64
-from typing import Optional
+import logging
+from typing import Optional, TYPE_CHECKING
 from datetime import date
 
 import numpy as np
 from PIL import Image
-from paddleocr import PaddleOCR
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 
 from app.core.config import settings
 from app.core.llm import get_chat_model
+
+if TYPE_CHECKING:
+    from paddleocr import PaddleOCR
+
+logger = logging.getLogger(__name__)
 
 # ── Pydantic output schema ───────────────────────────────────
 
@@ -41,12 +46,20 @@ class OCRResult(BaseModel):
 
 
 # ── Initialise PaddleOCR (lazy singleton) ───────────────────
+#
+# The import itself (not just instantiation) is deferred into this function,
+# not just the object construction. paddleocr/paddlepaddle/opencv is a heavy,
+# slow-to-install dependency chain that only the actual OCR call path needs —
+# every other function in this module (the regex parsers, GST/date/currency
+# extraction) has zero real dependency on it and should be testable without
+# installing it at all.
 
-_ocr_engine: Optional[PaddleOCR] = None
+_ocr_engine: "Optional[PaddleOCR]" = None
 
-def get_ocr_engine() -> PaddleOCR:
+def get_ocr_engine() -> "PaddleOCR":
     global _ocr_engine
     if _ocr_engine is None:
+        from paddleocr import PaddleOCR
         _ocr_engine = PaddleOCR(use_angle_cls=True, lang="en", show_log=False)
     return _ocr_engine
 
@@ -231,6 +244,7 @@ async def classify_with_llm(text: str) -> dict:
         result = await chain.ainvoke({"text": text[:2000]})  # cap to 2k chars
         return _parse_json(result.content)
     except Exception:
+        logger.exception("Vendor/category classification failed — proceeding with no LLM fields")
         return {}
 
 

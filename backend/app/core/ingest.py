@@ -8,10 +8,14 @@ LangGraph pipeline. Do not duplicate this logic in routes or connectors.
 """
 from __future__ import annotations
 
+import logging
 import uuid
 
+from app.core.config import settings
 from app.core.supabase import get_supabase
 from app.agents.orchestrator import get_graph
+
+logger = logging.getLogger(__name__)
 
 
 async def ingest_receipt(
@@ -27,9 +31,19 @@ async def ingest_receipt(
     Returns the new receipt_id. Does NOT run the pipeline — callers decide
     whether that happens in a background task (manual upload) or inline
     (automation sync, which is already off the request path).
+
+    Enforces MAX_UPLOAD_SIZE_BYTES here (not just in the frontend) so every
+    ingest path — manual upload AND automation connectors — is protected
+    uniformly; a connector could otherwise pull an oversized attachment
+    straight into the OCR/vision pipeline before anything would reject it.
     """
     if not file_bytes:
         raise ValueError("Empty file")
+    if len(file_bytes) > settings.MAX_UPLOAD_SIZE_BYTES:
+        raise ValueError(
+            f"File too large ({len(file_bytes) / 1024 / 1024:.1f} MB) — "
+            f"max {settings.MAX_UPLOAD_SIZE_BYTES / 1024 / 1024:.0f} MB"
+        )
 
     supabase = get_supabase()
     receipt_id = str(uuid.uuid4())
@@ -71,5 +85,8 @@ async def run_ingest_pipeline(receipt_id: str, business_id: str, uploaded_by: st
         }
         await graph.ainvoke(initial_state, config=config)
     except Exception:
+        # This runs as a background task — a client never sees this exception,
+        # so without logging it a pipeline failure would be completely invisible.
+        logger.exception("Ingest pipeline failed for receipt_id=%r business_id=%r", receipt_id, business_id)
         supabase = get_supabase()
         supabase.table("receipts").update({"status": "failed"}).eq("id", receipt_id).execute()

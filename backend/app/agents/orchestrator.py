@@ -7,6 +7,7 @@ to keep graph state lean as agent count grows (Phase 9 recommendation).
 """
 from __future__ import annotations
 
+import logging
 from typing import TypedDict, Optional
 from langgraph.graph import StateGraph, END
 
@@ -14,6 +15,8 @@ from app.agents.ocr_agent import run_ocr_agent, OCRResult
 from app.agents.accounting_agent import run_accounting_agent
 from app.core.supabase import get_supabase
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 # ── Graph State ──────────────────────────────────────────────
@@ -42,10 +45,16 @@ async def ocr_node(state: ReceiptState) -> ReceiptState:
     try:
         image_bytes = state.get("image_bytes")
         if not image_bytes:
-            # Fetch from Supabase Storage if not in state
+            # Fetch from Supabase Storage if not in state.
+            # NOTE: plain .execute() + length check, not .single() — .single()
+            # raises on zero OR more-than-one matching rows (e.g. a receipt
+            # insert that hasn't committed yet), which would surface as an
+            # opaque PostgREST error instead of a clear "not found".
             supabase = get_supabase()
-            receipt = supabase.table("receipts").select("storage_path").eq("id", state["receipt_id"]).single().execute()
-            storage_path = receipt.data["storage_path"]
+            rows = supabase.table("receipts").select("storage_path").eq("id", state["receipt_id"]).execute().data
+            if not rows:
+                raise ValueError(f"Receipt {state['receipt_id']} not found")
+            storage_path = rows[0]["storage_path"]
             response = supabase.storage.from_("receipts").download(storage_path)
             image_bytes = response
 
@@ -76,6 +85,7 @@ async def ocr_node(state: ReceiptState) -> ReceiptState:
             "status": "needs_review" if result.needs_human_review else "processing",
         }
     except Exception as e:
+        logger.exception("OCR node failed for receipt_id=%r", state.get("receipt_id"))
         return {**state, "error": str(e), "status": "failed"}
 
 
@@ -116,6 +126,7 @@ async def accounting_node(state: ReceiptState) -> ReceiptState:
 
         return {**state, "accounting_result": result, "status": "completed"}
     except Exception as e:
+        logger.exception("Accounting node failed for receipt_id=%r", state.get("receipt_id"))
         return {**state, "error": str(e), "status": "failed"}
 
 
@@ -178,8 +189,11 @@ async def _init_checkpointer():
             await saver.setup()
             print("🗄️  LangGraph checkpointer: Postgres (durable)")
             return saver
-        except Exception as e:  # missing psycopg / bad URL → don't crash the app
-            print(f"⚠️  Postgres checkpointer unavailable ({e}); using in-memory.")
+        except Exception:  # missing psycopg / bad URL → don't crash the app
+            # logger.exception (not print) so this failure has a real traceback —
+            # a silent fallback to in-memory here means HITL state quietly stops
+            # surviving restarts, with no signal beyond an easily-missed log line.
+            logger.exception("Postgres checkpointer unavailable — falling back to in-memory (NOT durable)")
 
     from langgraph.checkpoint.memory import MemorySaver
     print("🗄️  LangGraph checkpointer: in-memory (dev only — not durable)")
