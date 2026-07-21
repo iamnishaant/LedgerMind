@@ -1,7 +1,7 @@
 # AI FinanceOS — Project Status
 
 **As of: 2026-07-21**
-**Latest commit:** `2216e67` — "Add Phase 10 (first slice): read-only Audit Log viewer over agent_runs" (pushed to `origin/main`)
+**Latest commit:** `ae2dab4` — "Add Phase 10: API keys + ERP export (final Phase 10 piece)" (pushed to `origin/main`)
 
 This is a snapshot, not a roadmap or audit — see `AUDIT_REPORT.md` (phase-by-phase completion
 detail, 2026-07-14) and `STRENGTHENING_ROADMAP.md` (the hardening plan this status reflects
@@ -11,11 +11,11 @@ progress against) for the deeper documents this summarizes.
 
 ## Rollup
 
-**9 of 11 roadmap items (Phases 0–7, 9) are built and live-verified. Phase 8 is code-complete with
-one manual step outstanding. Phase 10 is underway (first slice shipped).** Backend
-security/reliability hardening (Week 1), a real automated test suite (Week 1–2), and Phase 9 (Fraud
-agent + the chained per-receipt pipeline, now with full test parity across both new agents) are all
-done.
+**10 of 11 roadmap items (Phases 0–7, 9, 10) are built and live-verified. Phase 8 is code-complete
+with one manual step outstanding — the only thing standing between this project and every planned
+phase being done.** Backend security/reliability hardening (Week 1), a real automated test suite
+(Week 1–2), Phase 9 (Fraud agent + the chained per-receipt pipeline), and Phase 10 (Enterprise: audit
+log, teams & roles, approvals, API keys + export) are all done.
 
 | Phase | Status |
 |---|---|
@@ -29,7 +29,7 @@ done.
 | 7 — AI CFO | 🟢 Done |
 | 8 — Automations (Gmail) | 🟡 Code done; real OAuth click-through still pending (needs a human browser) |
 | 9 — Multi-Agent / Fraud | 🟢 Done |
-| 10 — Enterprise | 🟡 In progress — Audit Log viewer shipped; teams/roles, approvals, API keys/ERP export open |
+| 10 — Enterprise | 🟢 Done |
 
 ---
 
@@ -96,11 +96,38 @@ every other agent in this project):
   page-triggered aggregates rather than per-receipt steps (see above). That interpretation was
   flagged before building and not overridden.
 
-### Phase 10 — Enterprise (first slice: Audit Log viewer)
-A read-only dashboard page over `agent_runs` — data every agent has written since Phase 1 with
-nothing previously surfacing it. `GET /api/v1/audit` (filterable by agent/status/receipt, paginated)
-+ `GET /api/v1/audit/summary` (totals, success rate, breakdowns), no new tables, no LLM. 6 new tests.
-Teams/roles, approvals, and API keys/ERP export — the other three pieces of Phase 10 — are still open.
+### Phase 10 — Enterprise (all 4 pieces, now complete)
+Four commits, each independently tested and verified before the next began:
+
+1. **Audit Log viewer** — read-only dashboard page over `agent_runs` (data every agent has written
+   since Phase 1, nothing previously surfaced it). `GET /api/v1/audit` (filterable, paginated) +
+   `/audit/summary` (totals, success rate, breakdowns). No new tables, no LLM. 6 tests.
+2. **Teams & Roles** — the architecturally significant piece: a business can now have more than one
+   user. New `business_members`/`business_invites` tables, a `SECURITY DEFINER` trigger that
+   auto-adds the owner as a member on business creation, and a rewrite of RLS across all 7
+   previously `owner_id`-scoped tables around a shared `is_business_member()` helper — **applied
+   live against the dev Supabase project and verified there**, not just written. `ensure_owns_business()`
+   now checks membership (any role) instead of literal `owner_id`; a real bug this surfaced and fixed:
+   `dashboard/layout.tsx` resolved "which businesses does this user belong to" via `owner_id` only,
+   which would have wrongly bounced an invited member to onboarding. Invite flow is a shareable
+   token link (`/join/[token]`) — no email-sending infra in this project. 19 tests.
+3. **Approvals workflow** — builds directly on Fraud (Phase 9) and Teams & Roles: an expense the
+   Fraud agent scores `'high'` risk now needs an owner's sign-off (`expenses.approval_status`)
+   before it's settled. Deliberately narrower than "over a threshold OR flagged" — only the fraud
+   signal gates approval, no separate dollar-threshold settings surface. 10 tests.
+4. **API keys + ERP export** — programmatic, business-scoped CSV export for connecting an external
+   accounting tool, plus a one-click download in the dashboard. Only a SHA-256 hash of a key is ever
+   stored. API-key auth is deliberately scoped to the one endpoint that needs it (export), not
+   bolted onto the whole API. 20 tests.
+
+**A real, currently-live bug found and fixed along the way:** writing the export endpoint's month
+filter surfaced that `expenses.py`'s existing `f"{month}-32"` trick is an invalid date literal for
+every month (max real day is 31) — Postgres rejected it outright for any 31-day month, **including
+July, the current month**, meaning filtering the live Expenses page to this month would 500 right
+now. Fixed at the root with a shared `app/core/dates.py:month_bounds()` helper, not just patched in
+the new code; pinned with 6 regression tests.
+
+Phase 10 total: 61 new backend tests. **Full suite: 108/108 passing.**
 
 ---
 
@@ -108,18 +135,21 @@ Teams/roles, approvals, and API keys/ERP export — the other three pieces of Ph
 
 1. **Phase 8's one remaining manual step** — no Gmail account has actually been connected yet
    (`connected_accounts` is empty). Needs a human to click through Google's OAuth consent screen;
-   real `GOOGLE_CLIENT_ID`/`SECRET` are already configured.
+   real `GOOGLE_CLIENT_ID`/`SECRET` are already configured. This is now the only unfinished item
+   across all 11 roadmap phases.
 2. **`INNGEST_EVENT_KEY`/`SIGNING_KEY` still blank** — the 15-minute Gmail poll is wired but inert;
    only the manual "Sync now" button is live today.
 3. **First real GitHub Actions run unconfirmed** — the workflow is written and pushed but hasn't
    been watched executing; first run may need one round of adjustment.
-4. **Phase 10** — 3 of 4 pieces still open: teams/roles (multi-user + tightened RLS), an approvals
-   workflow, and API keys + ERP export. (The 4th, the audit-log viewer, is now shipped.)
-5. Minor, noticed in passing: `frontend/package.json` lists both `framer-motion` and `motion` —
+4. Minor, noticed in passing: `frontend/package.json` lists both `framer-motion` and `motion` —
    duplicates the animation runtime; a leftover from before this project standardized on `motion`.
+5. Migrations `0004`–`0006` were applied directly against the live dev Supabase project via psycopg
+   during this session (each in its own transaction, each verified live afterward) — worth knowing
+   if this project is ever cloned into a fresh Supabase project: `schema.sql` already reflects the
+   end state, so a fresh install just needs `schema.sql` run once; the `migrations/` files are the
+   incremental history for anyone applying them to an existing pre-Phase-10 database instead.
 
 ## Recommended next step
-Either close out Phase 8 (connect a real Gmail account, confirm a real receipt syncs end-to-end
-through the now-full Fraud/Budget-Monitor chain) or continue Phase 10 with the next piece — teams &
-roles is the architecturally significant one (touches RLS/auth used by every table); approvals and
-API keys/ERP export are more contained.
+Close out Phase 8 — connect a real Gmail account, confirm a real receipt syncs end-to-end through
+the full Fraud/Budget-Monitor/Approvals chain now in place. It's the last open item in the entire
+roadmap.
