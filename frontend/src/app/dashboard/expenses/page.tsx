@@ -21,7 +21,14 @@ interface Expense {
   gst_amount?: number | null;
   is_duplicate?: boolean;
   description?: string | null;
+  fraud_risk?: "low" | "medium" | "high" | null;
+  metadata?: { fraud_reasons?: string[]; budget_alerts?: { budget_name: string; state: string }[] } | null;
 }
+
+const FRAUD_BADGE: Record<string, { label: string; color: string }> = {
+  high: { label: "high risk", color: "#f87171" },
+  medium: { label: "review", color: "#f59e0b" },
+};
 
 // ── Illustrative fallback data (used when the API is unreachable) ──
 const SAMPLE: Expense[] = [
@@ -195,6 +202,18 @@ export default function ExpensesPage() {
                       {e.is_duplicate && (
                         <span style={{ marginLeft: 8, fontSize: "0.66rem", fontWeight: 700, color: "#f59e0b", background: "rgba(245,158,11,0.14)", padding: "2px 7px", borderRadius: 999, textTransform: "uppercase" }}>
                           dup
+                        </span>
+                      )}
+                      {e.fraud_risk && FRAUD_BADGE[e.fraud_risk] && (
+                        <span
+                          title={e.metadata?.fraud_reasons?.join(" · ") ?? undefined}
+                          style={{
+                            marginLeft: 8, fontSize: "0.66rem", fontWeight: 700,
+                            color: FRAUD_BADGE[e.fraud_risk].color,
+                            background: `${FRAUD_BADGE[e.fraud_risk].color}20`,
+                            padding: "2px 7px", borderRadius: 999, textTransform: "uppercase",
+                          }}>
+                          {FRAUD_BADGE[e.fraud_risk].label}
                         </span>
                       )}
                     </td>

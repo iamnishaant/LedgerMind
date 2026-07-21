@@ -1,9 +1,15 @@
 """
-LangGraph Orchestrator — Phase 1 + Phase 2 ready
-Graph: receipt uploaded → OCR → (human review?) → Accounting → save to DB
+LangGraph Orchestrator — Phase 1 + Phase 2 + Phase 9 ready
+Graph: receipt uploaded → OCR → (human review?) → Accounting → Fraud → Budget Monitor
 
-State passes only references (receipt_id, business_id) + compact JSON payload
-to keep graph state lean as agent count grows (Phase 9 recommendation).
+Fraud + Budget Monitor (Phase 9) are per-receipt enrichment agents: both operate
+on the single expense that was just booked, so they belong in this graph. Forecast
+and CFO deliberately do NOT — they're business-level aggregates computed on page
+load, and re-running them (an LLM call, in the CFO's case) on every single receipt
+upload would be wasteful and semantically wrong.
+
+State passes only references (receipt_id, business_id, expense_id) + compact JSON
+payload to keep graph state lean as agent count grows.
 """
 from __future__ import annotations
 
@@ -13,6 +19,8 @@ from langgraph.graph import StateGraph, END
 
 from app.agents.ocr_agent import run_ocr_agent, OCRResult
 from app.agents.accounting_agent import run_accounting_agent
+from app.agents.fraud_agent import run_fraud_agent
+from app.agents.budget_monitor import run_budget_monitor
 from app.core.supabase import get_supabase
 from app.core.config import settings
 
@@ -26,11 +34,14 @@ class ReceiptState(TypedDict):
     receipt_id: str
     business_id: str
     uploaded_by: str
+    expense_id: Optional[str]
 
     # Compact payload from each agent
     image_bytes: Optional[bytes]          # passed only during OCR step, then cleared
     ocr_result: Optional[dict]
     accounting_result: Optional[dict]
+    fraud_result: Optional[dict]
+    budget_result: Optional[dict]
 
     # Control flow
     needs_human_review: bool
@@ -124,10 +135,75 @@ async def accounting_node(state: ReceiptState) -> ReceiptState:
 
         supabase.table("receipts").update({"status": "completed"}).eq("id", state["receipt_id"]).execute()
 
-        return {**state, "accounting_result": result, "status": "completed"}
+        return {
+            **state,
+            "accounting_result": result,
+            "expense_id": result.get("expense_id"),
+            "status": "completed",
+        }
     except Exception as e:
         logger.exception("Accounting node failed for receipt_id=%r", state.get("receipt_id"))
         return {**state, "error": str(e), "status": "failed"}
+
+
+# ── Node: Fraud Agent (Phase 9) ──────────────────────────────
+
+async def fraud_node(state: ReceiptState) -> ReceiptState:
+    """
+    Score the just-booked expense for fraud risk. Pure enrichment: the expense
+    already exists and `receipts.status` is already 'completed' — a failure
+    here must never undo that, so this node swallows its own errors.
+    """
+    expense_id = state.get("expense_id")
+    if not expense_id:
+        return state
+    try:
+        supabase = get_supabase()
+        rows = supabase.table("expenses").select("*").eq("id", expense_id).execute().data
+        if not rows:
+            return state
+
+        result = await run_fraud_agent(state["business_id"], expense_id, rows[0])
+        supabase.table("agent_runs").insert({
+            "business_id": state["business_id"],
+            "receipt_id": state["receipt_id"],
+            "agent_name": "fraud_agent",
+            "status": "failed" if result.get("error") else "completed",
+            "output_payload": result,
+        }).execute()
+
+        return {**state, "fraud_result": result}
+    except Exception:
+        logger.exception("Fraud node failed for expense_id=%r", expense_id)
+        return state
+
+
+# ── Node: Budget Monitor (Phase 9) ───────────────────────────
+
+async def budget_monitor_node(state: ReceiptState) -> ReceiptState:
+    """Flag the expense if it pushed a matching budget into at_risk/over. Enrichment only."""
+    expense_id = state.get("expense_id")
+    if not expense_id:
+        return state
+    try:
+        supabase = get_supabase()
+        rows = supabase.table("expenses").select("*").eq("id", expense_id).execute().data
+        if not rows:
+            return state
+
+        result = await run_budget_monitor(state["business_id"], expense_id, rows[0])
+        supabase.table("agent_runs").insert({
+            "business_id": state["business_id"],
+            "receipt_id": state["receipt_id"],
+            "agent_name": "budget_monitor",
+            "status": "failed" if result.get("error") else "completed",
+            "output_payload": result,
+        }).execute()
+
+        return {**state, "budget_result": result}
+    except Exception:
+        logger.exception("Budget monitor node failed for expense_id=%r", expense_id)
+        return state
 
 
 # ── Routing ──────────────────────────────────────────────────
@@ -140,6 +216,12 @@ def route_after_ocr(state: ReceiptState) -> str:
     return "accounting"
 
 
+def route_after_accounting(state: ReceiptState) -> str:
+    if state["status"] == "failed" or not state.get("expense_id"):
+        return "end"
+    return "fraud"
+
+
 # ── Build Graph ──────────────────────────────────────────────
 
 def build_orchestrator() -> StateGraph:
@@ -148,6 +230,8 @@ def build_orchestrator() -> StateGraph:
     graph.add_node("ocr", ocr_node)
     graph.add_node("human_review", human_review_node)
     graph.add_node("accounting", accounting_node)
+    graph.add_node("fraud", fraud_node)
+    graph.add_node("budget_monitor", budget_monitor_node)
 
     graph.set_entry_point("ocr")
 
@@ -159,7 +243,13 @@ def build_orchestrator() -> StateGraph:
 
     # After human review → accounting
     graph.add_edge("human_review", "accounting")
-    graph.add_edge("accounting", END)
+
+    graph.add_conditional_edges("accounting", route_after_accounting, {
+        "fraud": "fraud",
+        "end": END,
+    })
+    graph.add_edge("fraud", "budget_monitor")
+    graph.add_edge("budget_monitor", END)
 
     return graph
 
