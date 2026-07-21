@@ -1,13 +1,22 @@
 """
-Auth — Phase 0
+Auth — Phase 0 (+ Phase 10 teams/roles)
 
 Verifies the Supabase access token sent by the frontend and enforces that the
-caller actually owns whatever business_id they're operating on. Without the
-ownership check, a login page is theater: the backend runs on the service-role
-key (bypasses RLS), so anything short of an explicit check here would let an
-authenticated user read/write ANY business by just changing a query param.
+caller actually has access to whatever business_id they're operating on.
+Without this check, a login page is theater: the backend runs on the
+service-role key (bypasses RLS), so anything short of an explicit check here
+would let an authenticated user read/write ANY business by just changing a
+query param.
+
+Since Phase 10, "access" means membership in `business_members` (any role),
+not literal `businesses.owner_id` equality — a business can now have more
+than one user. The owner is always a member too (auto-inserted by the
+`on_business_created` trigger — see supabase/schema.sql), so this is a
+strict widening: nothing that used to pass still fails.
 """
 from __future__ import annotations
+
+from typing import Optional
 
 from fastapi import Header, HTTPException
 
@@ -35,15 +44,26 @@ async def get_current_user(authorization: str | None = Header(default=None)) -> 
 
 
 def ensure_owns_business(business_id: str, user_id: str) -> None:
-    """Raise 403 unless `user_id` is the owner_id of `business_id`."""
+    """Raise 403 unless `user_id` is a member (any role) of `business_id`."""
+    if get_member_role(business_id, user_id) is None:
+        raise HTTPException(status_code=403, detail="You don't have access to this business")
+
+
+def get_member_role(business_id: str, user_id: str) -> Optional[str]:
+    """Return 'owner'/'member' if `user_id` belongs to `business_id`, else None."""
     sb = get_supabase()
     row = (
-        sb.table("businesses").select("id")
-        .eq("id", business_id).eq("owner_id", user_id)
+        sb.table("business_members").select("role")
+        .eq("business_id", business_id).eq("user_id", user_id)
         .limit(1).execute().data
     )
-    if not row:
-        raise HTTPException(status_code=403, detail="You don't have access to this business")
+    return row[0]["role"] if row else None
+
+
+def ensure_is_owner(business_id: str, user_id: str) -> None:
+    """Raise 403 unless `user_id` has the 'owner' role on `business_id`."""
+    if get_member_role(business_id, user_id) != "owner":
+        raise HTTPException(status_code=403, detail="Only the business owner can do this")
 
 
 def ensure_owns_receipt(receipt_id: str, user_id: str) -> dict:

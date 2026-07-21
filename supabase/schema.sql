@@ -34,6 +34,39 @@ create table public.businesses (
 );
 
 -- ============================================================
+-- TEAMS & ROLES (Phase 10) — who belongs to a business + their role.
+-- Every business always has its owner as a member (auto-created by a
+-- trigger — see TRIGGERS section below). Two roles only: 'owner' (full
+-- control) and 'member' (day-to-day access, no approvals/team management).
+-- ============================================================
+create table public.business_members (
+  id           uuid primary key default uuid_generate_v4(),
+  business_id  uuid not null references public.businesses(id) on delete cascade,
+  user_id      uuid not null references public.profiles(id) on delete cascade,
+  role         text not null default 'member' check (role in ('owner','member')),
+  invited_by   uuid references public.profiles(id),
+  created_at   timestamptz not null default now(),
+  unique (business_id, user_id)
+);
+
+-- Token-based invite links — no email-sending infra in this project, so the
+-- owner shares the link out of band and the recipient redeems it once logged in.
+create table public.business_invites (
+  id           uuid primary key default uuid_generate_v4(),
+  business_id  uuid not null references public.businesses(id) on delete cascade,
+  role         text not null default 'member' check (role in ('member')), -- can't invite as owner
+  token        text not null unique,
+  invited_by   uuid not null references public.profiles(id),
+  expires_at   timestamptz not null,
+  accepted_by  uuid references public.profiles(id),
+  accepted_at  timestamptz,
+  created_at   timestamptz not null default now()
+);
+
+create index on public.business_members(user_id);
+create index on public.business_invites(business_id);
+
+-- ============================================================
 -- RECEIPTS / DOCUMENTS (raw uploads)
 -- ============================================================
 create table public.receipts (
@@ -147,6 +180,8 @@ create index on public.chat_messages using ivfflat (embedding vector_cosine_ops)
 -- ============================================================
 alter table public.profiles    enable row level security;
 alter table public.businesses  enable row level security;
+alter table public.business_members enable row level security;
+alter table public.business_invites enable row level security;
 alter table public.receipts    enable row level security;
 alter table public.expenses    enable row level security;
 alter table public.budgets     enable row level security;
@@ -157,37 +192,50 @@ alter table public.agent_runs  enable row level security;
 create policy "Own profile" on public.profiles
   for all using (auth.uid() = id);
 
--- Businesses: owner full access
-create policy "Business owner" on public.businesses
-  for all using (owner_id = auth.uid());
+-- SECURITY DEFINER helper — avoids RLS self-recursion on business_members
+-- (a plain "in (select business_id from business_members where user_id = ...)"
+-- policy on business_members itself would recurse into its own policy check).
+create or replace function public.is_business_member(target_business_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.business_members
+    where business_id = target_business_id and user_id = auth.uid()
+  );
+$$;
 
--- Receipts: scoped to businesses the user owns
+-- Businesses: any team member (the owner is always a member too)
+create policy "Business access" on public.businesses
+  for all using (is_business_member(id));
+
+-- Team roster + invites: visible to members. No write policies — membership
+-- changes only ever happen through the backend (service-role key, bypasses
+-- RLS) or the auto-owner trigger below, same model as every other write
+-- path in this project (see auth.py's module docstring).
+create policy "Member roster visible to members" on public.business_members
+  for select using (is_business_member(business_id));
+
+create policy "Invites visible to members" on public.business_invites
+  for select using (is_business_member(business_id));
+
+-- Receipts: scoped to businesses the user is a member of
 create policy "Receipt access" on public.receipts
-  for all using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  for all using (is_business_member(business_id));
 
--- Expenses: scoped to businesses the user owns
+-- Expenses: scoped to businesses the user is a member of
 create policy "Expense access" on public.expenses
-  for all using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  for all using (is_business_member(business_id));
 
--- Budgets: scoped to businesses the user owns
+-- Budgets: scoped to businesses the user is a member of
 create policy "Budget access" on public.budgets
-  for all using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  for all using (is_business_member(business_id));
 
 -- Chat: scoped to user + business
 create policy "Chat access" on public.chat_messages
   for all using (user_id = auth.uid());
 
--- Agent runs: business owner only
+-- Agent runs: scoped to businesses the user is a member of
 create policy "Agent run access" on public.agent_runs
-  for all using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  for all using (is_business_member(business_id));
 
 -- ============================================================
 -- TRIGGERS — auto-update updated_at
@@ -226,6 +274,23 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ============================================================
+-- TRIGGER — auto-create the owner's business_members row (Phase 10)
+-- ============================================================
+create or replace function public.handle_new_business()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.business_members (business_id, user_id, role)
+  values (new.id, new.owner_id, 'owner')
+  on conflict (business_id, user_id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger on_business_created
+  after insert on public.businesses
+  for each row execute procedure public.handle_new_business();
+
+-- ============================================================
 -- AUTOMATIONS (Phase 8) — OAuth connections + ingest dedup
 -- ============================================================
 create table public.connected_accounts (
@@ -260,11 +325,7 @@ alter table public.connected_accounts        enable row level security;
 alter table public.processed_external_items  enable row level security;
 
 create policy "Connected account access" on public.connected_accounts
-  for all using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  for all using (is_business_member(business_id));
 
 create policy "Processed item access" on public.processed_external_items
-  for all using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  for all using (is_business_member(business_id));

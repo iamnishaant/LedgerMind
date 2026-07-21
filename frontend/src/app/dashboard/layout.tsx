@@ -13,13 +13,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) redirect("/login");
 
-  const { data: businesses } = await supabase
-    .from("businesses")
-    .select("id, name")
-    .eq("owner_id", user.id)
+  // Businesses the user belongs to (owner OR invited member) — not just ones
+  // they own. A member added via a team invite owns nothing directly, so a
+  // plain owner_id lookup here would wrongly bounce them to /onboarding.
+  const { data: memberships } = await supabase
+    .from("business_members")
+    .select("business_id, businesses(id, name)")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: true });
 
-  if (!businesses || businesses.length === 0) redirect("/onboarding");
+  const businesses = (memberships ?? [])
+    .map((m: any) => m.businesses)
+    .filter(Boolean);
+
+  if (businesses.length === 0) redirect("/onboarding");
 
   const { data: profile } = await supabase
     .from("profiles")
