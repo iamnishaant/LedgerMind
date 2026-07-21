@@ -13,6 +13,13 @@ import sys
 # checkpointer would silently fall back to in-memory on every Windows run.
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # Windows' console defaults to a legacy codepage (cp1252) for Python's
+    # stdout/stderr, not UTF-8 — any print() with an emoji (this file has
+    # several, e.g. the startup banner below) crashes with UnicodeEncodeError
+    # the moment it runs. Confirmed reproducing this exact crash on this
+    # machine. .reconfigure() is available on text streams since Python 3.7.
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 import logging
 
