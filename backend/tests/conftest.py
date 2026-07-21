@@ -34,14 +34,9 @@ def supabase():
     return get_supabase()
 
 
-@pytest.fixture
-def qa_business(supabase):
-    """
-    Creates a throwaway auth user + business, yields (business_id, user_id),
-    and ALWAYS deletes both afterward — even if the test fails.
-    Skips the test (not a failure) if Supabase is unreachable, e.g. CI
-    running without real secrets.
-    """
+def _make_qa_business(supabase, name: str):
+    """Shared body for qa_business/second_business: create a throwaway auth
+    user + business, yield (business_id, user_id), always clean up after."""
     email = f"pytest-qa-{uuid.uuid4().hex[:10]}@financeos.local"
     user_id = None
     business_id = None
@@ -55,7 +50,7 @@ def qa_business(supabase):
         user_id = created.user.id
 
         biz = supabase.table("businesses").insert({
-            "owner_id": user_id, "name": "Pytest QA Business", "currency": "INR",
+            "owner_id": user_id, "name": name, "currency": "INR",
         }).execute().data[0]
         business_id = biz["id"]
 
@@ -68,6 +63,24 @@ def qa_business(supabase):
                 supabase.auth.admin.delete_user(user_id)
             except Exception:
                 pass
+
+
+@pytest.fixture
+def qa_business(supabase):
+    """
+    Creates a throwaway auth user + business, yields (business_id, user_id),
+    and ALWAYS deletes both afterward — even if the test fails.
+    Skips the test (not a failure) if Supabase is unreachable, e.g. CI
+    running without real secrets.
+    """
+    yield from _make_qa_business(supabase, "Pytest QA Business")
+
+
+@pytest.fixture
+def second_business(supabase):
+    """A second, independent throwaway user + business — for tests that need
+    to prove one business can't see/touch another's data (e.g. API keys)."""
+    yield from _make_qa_business(supabase, "Pytest QA Business 2")
 
 
 @pytest.fixture

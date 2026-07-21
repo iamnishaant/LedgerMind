@@ -8,6 +8,7 @@ from typing import Optional
 
 from app.core.supabase import get_supabase
 from app.core.auth import get_current_user, ensure_owns_business
+from app.core.dates import month_bounds
 
 router = APIRouter()
 
@@ -31,7 +32,8 @@ async def list_expenses(
     if category:
         query = query.eq("category", category)
     if month:
-        query = query.gte("expense_date", f"{month}-01").lt("expense_date", f"{month}-32")
+        start, end = month_bounds(month)
+        query = query.gte("expense_date", start).lt("expense_date", end)
 
     result = query.order("expense_date", desc=True).range(offset, offset + limit - 1).execute()
     return {"expenses": result.data, "page": page, "limit": limit}
@@ -46,11 +48,12 @@ async def get_monthly_summary(business_id: str, month: str, user: dict = Depends
     ensure_owns_business(business_id, user["id"])
     supabase = get_supabase()
 
+    start, end = month_bounds(month)
     result = supabase.table("expenses").select(
         "amount, category, is_duplicate, gst_amount"
     ).eq("business_id", business_id).gte(
-        "expense_date", f"{month}-01"
-    ).lt("expense_date", f"{month}-32").execute()
+        "expense_date", start
+    ).lt("expense_date", end).execute()
 
     expenses = result.data
     total = sum(e["amount"] for e in expenses if e["amount"])

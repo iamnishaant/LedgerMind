@@ -338,3 +338,28 @@ create policy "Connected account access" on public.connected_accounts
 
 create policy "Processed item access" on public.processed_external_items
   for all using (is_business_member(business_id));
+
+-- ============================================================
+-- API KEYS (Phase 10) — programmatic access for ERP export
+-- Only a SHA-256 hash is stored; the plaintext key is shown once, at
+-- creation. key_prefix is display-only, for identifying a key in a list.
+-- ============================================================
+create table public.api_keys (
+  id            uuid primary key default uuid_generate_v4(),
+  business_id   uuid not null references public.businesses(id) on delete cascade,
+  name          text not null,
+  key_prefix    text not null,
+  key_hash      text not null unique,
+  created_by    uuid not null references public.profiles(id),
+  last_used_at  timestamptz,
+  revoked_at    timestamptz,
+  created_at    timestamptz not null default now()
+);
+
+create index on public.api_keys(business_id);
+create index on public.api_keys(key_hash);
+
+alter table public.api_keys enable row level security;
+
+create policy "API keys visible to members" on public.api_keys
+  for select using (is_business_member(business_id));

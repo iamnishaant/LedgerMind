@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Receipt, BarChart3, MessageSquare, ReceiptText,
-  Target, TrendingUp, BrainCircuit, Zap, History, Users, ShieldAlert, Settings, LogOut
+  Target, TrendingUp, BrainCircuit, Zap, History, Users, ShieldAlert, KeyRound, Settings, LogOut
 } from "lucide-react";
 import { useBusiness } from "@/lib/business-context";
 
@@ -20,6 +20,7 @@ const navItems = [
   { icon: History,         label: "Audit Log",  href: "/dashboard/audit",    phase: 10 },
   { icon: Users,           label: "Team",       href: "/dashboard/team",     phase: 10 },
   { icon: ShieldAlert,     label: "Approvals",  href: "/dashboard/approvals",phase: 10 },
+  { icon: KeyRound,        label: "API Keys",   href: "/dashboard/api-keys", phase: 10 },
 ];
 
 // Routes that are actually built (unlocked in the nav). Add each page here as it ships.
@@ -27,6 +28,7 @@ const BUILT = new Set([
   "/dashboard", "/dashboard/receipts", "/dashboard/expenses", "/dashboard/chat",
   "/dashboard/budgets", "/dashboard/forecasts", "/dashboard/gst", "/dashboard/cfo",
   "/dashboard/automations", "/dashboard/audit", "/dashboard/team", "/dashboard/approvals",
+  "/dashboard/api-keys",
 ]);
 
 export default function Sidebar() {
