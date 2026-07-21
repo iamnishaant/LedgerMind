@@ -1,7 +1,7 @@
 # AI FinanceOS — Project Status
 
 **As of: 2026-07-21**
-**Latest commit:** `d9aba51` — "Harden backend security/reliability, add automated test suite" (pushed to `origin/main`)
+**Latest commit:** `97369c6` — "Add Phase 9: Fraud agent + Budget Monitor, wired into the per-receipt chain" (pushed to `origin/main`)
 
 This is a snapshot, not a roadmap or audit — see `AUDIT_REPORT.md` (phase-by-phase completion
 detail, 2026-07-14) and `STRENGTHENING_ROADMAP.md` (the hardening plan this status reflects
@@ -11,10 +11,10 @@ progress against) for the deeper documents this summarizes.
 
 ## Rollup
 
-**8 of 11 roadmap items (Phases 0–7) are built and live-verified. Phase 8 is code-complete with
-one manual step outstanding. Phases 9–10 are not started.** Backend security/reliability hardening
-(Week 1) and a real automated test suite (Week 1–2) — the two biggest cross-cutting gaps — are now
-both done.
+**9 of 11 roadmap items (Phases 0–7, 9) are built and live-verified. Phase 8 is code-complete with
+one manual step outstanding. Phase 10 is not started.** Backend security/reliability hardening
+(Week 1), a real automated test suite (Week 1–2), and Phase 9 (Fraud agent + the chained per-receipt
+pipeline) are now all done.
 
 | Phase | Status |
 |---|---|
@@ -27,7 +27,7 @@ both done.
 | 6 — Forecasting | 🟢 Done |
 | 7 — AI CFO | 🟢 Done |
 | 8 — Automations (Gmail) | 🟡 Code done; real OAuth click-through still pending (needs a human browser) |
-| 9 — Multi-Agent / Fraud | 🔴 Not started |
+| 9 — Multi-Agent / Fraud | 🟢 Done |
 | 10 — Enterprise | 🔴 Not started |
 
 ---
@@ -69,6 +69,26 @@ now logs a real traceback.
   running** (needs a GitHub Actions run to confirm; DB-backed tests will self-skip until
   `SUPABASE_URL`/`SERVICE_KEY`/`ANON_KEY` are added as repo secrets).
 
+### Phase 9 — Multi-Agent / Fraud (new)
+The orchestrator graph is now `OCR → (human review?) → Accounting → Fraud → Budget Monitor`, not
+just the old 2-node `OCR → Accounting`. Two new deterministic agents (no LLM — same discipline as
+every other agent in this project):
+- **`fraud_agent.py`** — scores every booked expense against 4 signals: vendor amount outlier
+  (z-score vs that vendor's own history), category amount outlier, same-day/same-vendor split-invoice
+  pattern, and new-vendor-with-a-large-amount. Writes to `fraud_risk` (schema column existed since
+  Phase 1, unused until now) + `metadata.fraud_reasons`. Surfaced on the Expenses page as a
+  "review"/"high risk" badge.
+- **`budget_monitor.py`** — checks whether the just-booked expense pushed a matching budget into
+  `at_risk`/`over`, reusing `budgets.py`'s existing `_status_for` math (no duplicated logic).
+- **Forecast and CFO were deliberately NOT chained in per-receipt** — both are business-level
+  aggregates meant for on-demand page load (the CFO brief is an LLM call; running it on every single
+  receipt upload would be wasteful and semantically wrong). They remain independent, page-triggered
+  agents, unchanged.
+- Both new nodes are error-isolated: a bug in fraud scoring or budget checking can never roll back or
+  fail an already-booked expense — they only log and continue.
+- 7 new DB-backed tests (`test_fraud_agent.py`), each isolating one signal. **Full suite: 47/47
+  passing.**
+
 ---
 
 ## What's still open
@@ -80,12 +100,12 @@ now logs a real traceback.
    only the manual "Sync now" button is live today.
 3. **First real GitHub Actions run unconfirmed** — the workflow is written and pushed but hasn't
    been watched executing; first run may need one round of adjustment.
-4. **Phase 9** (Fraud agent, real per-receipt agent chain) and **Phase 10** (teams/roles, approvals,
-   an audit-log UI over the already-rich `agent_runs` data, API keys, ERP export) — not started.
+4. **Phase 10** (teams/roles, approvals, an audit-log UI over the already-rich `agent_runs` data,
+   API keys, ERP export) — not started.
 5. Minor, noticed in passing: `frontend/package.json` lists both `framer-motion` and `motion` —
    duplicates the animation runtime; a leftover from before this project standardized on `motion`.
 
 ## Recommended next step
-Either close out Phase 8 (connect a real Gmail account, confirm a real receipt syncs end-to-end) or
-move on to Phase 9 (Fraud agent + the unified multi-agent chain) — both are reasonable next moves;
-everything built so far now sits on a hardened, tested foundation rather than untested code.
+Close out Phase 8 (connect a real Gmail account, confirm a real receipt syncs end-to-end through the
+now-full Fraud/Budget-Monitor chain) — the only phase-completion work left before Phase 10
+(Enterprise), the last unstarted roadmap item.
