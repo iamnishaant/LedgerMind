@@ -144,11 +144,17 @@ async def run_fraud_agent(business_id: str, expense_id: str, expense: dict) -> d
             meta = dict(expense.get("metadata") or {})
             meta["fraud_reasons"] = reasons
             update["metadata"] = meta
+        # High-risk expenses need an owner's sign-off (Phase 10 Approvals) —
+        # only flip into 'pending' from the default 'not_required'; never
+        # overwrite an approval decision a human already made.
+        if risk == "high" and expense.get("approval_status", "not_required") == "not_required":
+            update["approval_status"] = "pending"
 
         supabase = get_supabase()
         supabase.table("expenses").update(update).eq("id", expense_id).execute()
 
-        return {"expense_id": expense_id, "fraud_risk": risk, "reasons": reasons}
+        return {"expense_id": expense_id, "fraud_risk": risk, "reasons": reasons,
+                "approval_status": update.get("approval_status", expense.get("approval_status", "not_required"))}
     except Exception:
         logger.exception("Fraud agent failed for expense_id=%r — leaving fraud_risk unset", expense_id)
         return {"expense_id": expense_id, "fraud_risk": None, "reasons": [], "error": True}

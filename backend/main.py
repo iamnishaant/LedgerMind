@@ -45,7 +45,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.inngest_app import inngest_client, INNGEST_FUNCTIONS
-from app.api.v1 import receipts, expenses, agents, health, chat, budgets, forecasts, gst, cfo, automations, audit, team
+from app.api.v1 import receipts, expenses, agents, health, chat, budgets, forecasts, gst, cfo, automations, audit, team, approvals
 
 # Re-assert the level AFTER all imports above: one of these (PaddleOCR is the
 # known offender) calls logging.getLogger().setLevel(...) itself as an import
@@ -98,6 +98,7 @@ app.include_router(cfo.router,       prefix="/api/v1/cfo",       tags=["CFO"])
 app.include_router(automations.router, prefix="/api/v1/automations", tags=["Automations"])
 app.include_router(audit.router,     prefix="/api/v1/audit",     tags=["Audit"])
 app.include_router(team.router,      prefix="/api/v1/team",      tags=["Team"])
+app.include_router(approvals.router, prefix="/api/v1/approvals", tags=["Approvals"])
 
 # ── Inngest (scheduled connector polling; see app/core/inngest_app.py) ──
 inngest.fast_api.serve(app, inngest_client, INNGEST_FUNCTIONS, serve_path="/api/inngest")

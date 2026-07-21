@@ -112,7 +112,15 @@ create table public.expenses (
   is_duplicate    boolean default false,
   fraud_risk      text check (fraud_risk in ('low','medium','high')),
   agent_tags      text[],                        -- e.g. ['auto_categorized', 'gst_verified']
-  
+
+  -- Approvals (Phase 10) — the Fraud agent sets 'pending' on 'high' risk;
+  -- everything else stays 'not_required'. Opt-in gate, not a blanket queue.
+  approval_status  text not null default 'not_required'
+                   check (approval_status in ('not_required','pending','approved','rejected')),
+  approved_by      uuid references public.profiles(id),
+  approved_at      timestamptz,
+  rejection_reason text,
+
   -- Flexible extensibility (Phase 10: multi-branch, ERP tags, etc.)
   metadata        jsonb not null default '{}',
 
@@ -171,6 +179,7 @@ create table public.agent_runs (
 -- ============================================================
 create index on public.expenses(business_id, expense_date desc);
 create index on public.expenses(business_id, category);
+create index on public.expenses(business_id, approval_status) where approval_status = 'pending';
 create index on public.receipts(business_id, status);
 create index on public.agent_runs(business_id, agent_name);
 create index on public.chat_messages using ivfflat (embedding vector_cosine_ops) with (lists = 100);
