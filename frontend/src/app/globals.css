@@ -96,7 +96,16 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    /* This app ships a SINGLE dark theme — every screen (auth, dashboard,
+       cards) hardcodes dark navy + off-white. The light palette in :root
+       above is a create-next-app leftover that was never meant to render;
+       with no `.dark` class on <html> it was silently theming the whole app
+       light and washing everything out. <html> now carries `class="dark"`
+       (supplying the correct foreground/border tokens), and we pin the base
+       background to the exact navy the auth + dashboard screens use so it can
+       never fall back to the light palette again. */
+    background-color: #0a0f1e;
   }
 }
 

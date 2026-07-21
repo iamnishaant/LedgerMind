@@ -125,7 +125,7 @@ export default function BudgetsPage() {
       {loading ? (
         <div style={{ color: "#64748b", padding: 40, textAlign: "center" }}>Loading budgets…</div>
       ) : budgets.length === 0 ? (
-        <div className="glass-card" style={{ padding: 48, textAlign: "center", color: "#64748b" }}>
+        <div className="glass-card" style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>
           No budgets yet. Click <strong style={{ color: "#818cf8" }}>New budget</strong> to create one.
         </div>
       ) : (
