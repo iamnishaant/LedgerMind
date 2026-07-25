@@ -34,6 +34,21 @@ def supabase():
     return get_supabase()
 
 
+@pytest.fixture
+def require_supabase(supabase):
+    """Skip a DB-backed test that does NOT use qa_business when Supabase is
+    unreachable (e.g. CI without real secrets, where the URL is a placeholder).
+
+    Negative-path tests that query Supabase directly for an expected-empty
+    result don't go through qa_business's create_user() skip path, so without
+    this they'd raise httpx.ConnectError instead of skipping. This mirrors
+    qa_business's behavior: skip (not fail) when there's no live database."""
+    try:
+        supabase.table("businesses").select("id").limit(1).execute()
+    except Exception as e:
+        pytest.skip(f"Live Supabase not reachable — skipping DB-backed test ({e})")
+
+
 def _make_qa_business(supabase, name: str):
     """Shared body for qa_business/second_business: create a throwaway auth
     user + business, yield (business_id, user_id), always clean up after."""

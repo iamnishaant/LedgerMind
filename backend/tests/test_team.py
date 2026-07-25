@@ -87,7 +87,7 @@ async def test_invite_cannot_grant_owner_role(qa_business):
     assert exc_info.value.status_code == 400
 
 
-async def test_accept_unknown_token_is_404():
+async def test_accept_unknown_token_is_404(require_supabase):
     with pytest.raises(HTTPException) as exc_info:
         await accept_invite(AcceptIn(token="not-a-real-token"), user={"id": str(uuid.uuid4())})
     assert exc_info.value.status_code == 404
