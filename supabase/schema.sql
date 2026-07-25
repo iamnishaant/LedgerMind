@@ -216,6 +216,14 @@ $$;
 create policy "Business access" on public.businesses
   for all using (is_business_member(id));
 
+-- Self-service creation: a user may INSERT a business they own. Needed because
+-- the membership-based "Business access" policy above can't authorize the very
+-- first insert (the owner's business_members row is only added by the
+-- AFTER INSERT trigger). owner_id = auth.uid() prevents creating a business
+-- owned by someone else. On INSERT, permissive WITH CHECKs are OR-combined.
+create policy "Create own business" on public.businesses
+  for insert with check (owner_id = auth.uid());
+
 -- Team roster + invites: visible to members. No write policies — membership
 -- changes only ever happen through the backend (service-role key, bypasses
 -- RLS) or the auto-owner trigger below, same model as every other write
