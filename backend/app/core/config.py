@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"
 
+    # Optional fast model for the interactive chat assistant only. Chat is
+    # latency-sensitive and benefits from a small, fast model (e.g. Anthropic
+    # 'claude-haiku-4-5' or an OpenAI mini). Blank → use the provider default
+    # model above (same behavior as before this setting existed).
+    CHAT_MODEL: str = ""
+
     # NVIDIA NIM (build.nvidia.com) — OpenAI-compatible endpoint, hosts Llama/etc.
     NVIDIA_API_KEY: str = ""
     NVIDIA_MODEL: str = "meta/llama-3.3-70b-instruct"  # robust 70B; change to any model on build.nvidia.com

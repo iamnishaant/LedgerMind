@@ -12,12 +12,13 @@ from __future__ import annotations
 import contextvars
 import json
 from datetime import date
+from typing import AsyncIterator
 
 from langchain_core.messages import (
-    AIMessage, HumanMessage, SystemMessage, ToolMessage, BaseMessage,
+    AIMessage, AIMessageChunk, HumanMessage, SystemMessage, ToolMessage, BaseMessage,
 )
 
-from app.core.llm import get_chat_model
+from app.core.llm import get_chat_model_fast
 from app.core.supabase import get_supabase
 
 # business_id for the current request — read by the tools (async-safe).
@@ -107,7 +108,7 @@ async def run_chat_agent(
 ) -> tuple[str, list[str]]:
     """Run the tool-calling loop. Returns (answer_text, tool_names_used)."""
     _business_ctx.set(business_id)
-    llm = get_chat_model().bind_tools(_TOOLS)
+    llm = get_chat_model_fast().bind_tools(_TOOLS)
 
     messages: list[BaseMessage] = [SystemMessage(_system_prompt())]
     if history:
@@ -133,3 +134,56 @@ async def run_chat_agent(
 
     answer = (ai.content if ai else "") or "I couldn't produce an answer — please try rephrasing."
     return answer, used
+
+
+async def stream_chat_agent(
+    business_id: str, message: str, history: list[BaseMessage] | None = None
+) -> AsyncIterator[dict]:
+    """Streaming variant of run_chat_agent. Yields event dicts as they happen:
+
+        {"type": "tool",  "name": <tool>}     when a tool is invoked
+        {"type": "token", "text": <delta>}    each answer token as it streams
+        {"type": "done",  "answer": <full>, "tools_used": [...]}  once, at the end
+
+    True token streaming: each turn is streamed with `astream`, accumulating an
+    AIMessageChunk so tool-call deltas are gathered correctly. During a
+    tool-calling turn the visible content is empty, so no stray tokens leak; the
+    final answer turn streams token-by-token, giving a fast time-to-first-token.
+    """
+    _business_ctx.set(business_id)
+    llm = get_chat_model_fast().bind_tools(_TOOLS)
+
+    messages: list[BaseMessage] = [SystemMessage(_system_prompt())]
+    if history:
+        messages.extend(history)
+    messages.append(HumanMessage(message))
+
+    used: list[str] = []
+    answer_parts: list[str] = []
+    for _ in range(4):  # cap tool rounds
+        gathered: AIMessageChunk | None = None
+        async for chunk in llm.astream(messages):
+            gathered = chunk if gathered is None else gathered + chunk
+            text = chunk.content if isinstance(chunk.content, str) else ""
+            if text:
+                answer_parts.append(text)
+                yield {"type": "token", "text": text}
+        if gathered is None:
+            break
+        messages.append(gathered)
+
+        tool_calls = getattr(gathered, "tool_calls", None) or []
+        if not tool_calls:
+            break
+        for tc in tool_calls:
+            fn = _TOOL_MAP.get(tc["name"])
+            used.append(tc["name"])
+            yield {"type": "tool", "name": tc["name"]}
+            try:
+                result = fn(**tc["args"]) if fn else json.dumps({"error": f"unknown tool {tc['name']}"})
+            except Exception as e:
+                result = json.dumps({"error": str(e)})
+            messages.append(ToolMessage(content=str(result), tool_call_id=tc["id"]))
+
+    answer = "".join(answer_parts) or "I couldn't produce an answer — please try rephrasing."
+    yield {"type": "done", "answer": answer, "tools_used": used}
