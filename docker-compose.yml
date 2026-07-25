@@ -1,0 +1,41 @@
+# LedgerMind — local/production container orchestration.
+#
+# Quick start:
+#   1. cp backend/.env.example backend/.env   and fill it in
+#   2. export the three NEXT_PUBLIC_* build args below (or put them in a root .env)
+#   3. docker compose up --build
+#
+# The database is Supabase (managed, external) — it is intentionally NOT a service
+# here. These containers are the two app tiers only.
+
+services:
+  backend:
+    build: ./backend
+    image: ledgermind-backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # NEXT_PUBLIC_* vars are inlined at BUILD time, so they must be build args,
+        # not runtime env. Set them in your shell or a root .env before `up --build`.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    image: ledgermind-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped

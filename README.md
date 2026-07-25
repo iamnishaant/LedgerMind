@@ -102,7 +102,7 @@ npm run dev
 
 ## Database
 
-`supabase/schema.sql` is the source of truth for a **fresh** install — run it once in the Supabase SQL editor. `supabase/migrations/` holds the incremental history (`0002`–`0007`) for applying changes to an existing database instead.
+`supabase/schema.sql` is the source of truth for a **fresh** install — run it once in the Supabase SQL editor. `supabase/migrations/` holds the incremental history (`0002`–`0006`) for applying changes to an existing database instead.
 
 ## Testing
 
