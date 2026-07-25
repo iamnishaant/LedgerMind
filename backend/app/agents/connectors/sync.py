@@ -20,7 +20,13 @@ from app.agents.connectors.gmail import GmailConnector
 
 _CONNECTORS: dict[str, Connector] = {
     "gmail": GmailConnector(),
-    # future: "drive": DriveConnector(), "dropbox": ..., "outlook": ...
+    # Scaffolded and protocol-conforming (share OAuth2Connector token handling),
+    # but intentionally NOT registered until each provider's OAuth app +
+    # credentials exist and its list/fetch methods are implemented — registering
+    # a half-built connector would falsely advertise it as available:
+    #   app.agents.connectors.drive.DriveConnector      (reuses GOOGLE_CLIENT_*)
+    #   app.agents.connectors.dropbox.DropboxConnector  (needs DROPBOX_CLIENT_*)
+    #   app.agents.connectors.outlook.OutlookConnector  (needs MS_CLIENT_*)
 }
 
 
