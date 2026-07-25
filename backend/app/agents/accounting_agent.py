@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.llm import get_chat_model
 from app.core.supabase import get_supabase
 from app.agents.gst_agent import evaluate_itc
+from app.agents.vendor_memory import learned_category, recent_correction_examples
 
 logger = logging.getLogger(__name__)
 
@@ -53,13 +54,21 @@ Given extracted receipt data, return a JSON with:
 - is_business_expense: boolean
 
 Respond with valid JSON only."""),
-    ("human", """
-Vendor: {vendor_name}
+    ("human", """{business_examples}Vendor: {vendor_name}
 Amount: {amount} {currency}
 Date: {expense_date}
 Raw text excerpt: {raw_text_excerpt}
 """),
 ])
+
+
+def _format_examples(examples: list[tuple[str, str]]) -> str:
+    """Render Tier-2 few-shot pairs as a prompt preamble, or '' if there are none.
+    Steers the model toward THIS business's conventions without a hard rule."""
+    if not examples:
+        return ""
+    lines = "\n".join(f'- "{vendor}" -> {category}' for vendor, category in examples)
+    return f"This business categorizes similar expenses like this:\n{lines}\n\nNow classify:\n"
 
 
 def _parse_json(content: str) -> dict:
@@ -78,13 +87,37 @@ def _parse_json(content: str) -> dict:
         raise
 
 
-async def _classify_expense(ocr_result: dict) -> dict:
-    """LLM-based expense classification (provider-agnostic)."""
+async def _classify_expense(ocr_result: dict, business_id: Optional[str] = None) -> dict:
+    """Classify an expense, informed by this business's past corrections.
+
+    Tier 1 — if the business has a confident prior for this vendor, apply it
+             deterministically (no LLM call at all).
+    Tier 2 — otherwise, inject the business's recent corrections as few-shot
+             examples and let the LLM classify.
+    With no correction history (or no business_id) both tiers are inert and this
+    behaves exactly as the original static-prompt classifier."""
+    vendor_name = ocr_result.get("vendor_name")
+
+    # Tier 1: deterministic vendor→category memory.
+    if business_id:
+        learned = learned_category(business_id, vendor_name)
+        if learned:
+            logger.info("Categorized %r as %r from correction memory (no LLM)", vendor_name, learned)
+            return {
+                "category": learned,
+                "description": ocr_result.get("description", ""),
+                "is_business_expense": True,
+                "_source": "learned_from_correction",
+            }
+
+    # Tier 2: few-shot-nudged LLM.
+    examples = recent_correction_examples(business_id) if business_id else []
     try:
         llm = get_chat_model()
         chain = _accounting_prompt | llm
         result = await chain.ainvoke({
-            "vendor_name": ocr_result.get("vendor_name", "Unknown"),
+            "business_examples": _format_examples(examples),
+            "vendor_name": vendor_name or "Unknown",
             "amount": ocr_result.get("amount", 0),
             "currency": ocr_result.get("currency", "INR"),
             "expense_date": ocr_result.get("expense_date", ""),
@@ -93,7 +126,7 @@ async def _classify_expense(ocr_result: dict) -> dict:
         return _parse_json(result.content)
     except Exception:
         logger.exception("Expense classification failed for vendor=%r — falling back to 'Other'",
-                          ocr_result.get("vendor_name"))
+                          vendor_name)
         return {"category": "Other", "description": "", "is_business_expense": True}
 
 
@@ -133,8 +166,8 @@ async def run_accounting_agent(receipt_id: str, business_id: str, ocr_result: di
     2. Detect duplicates
     3. Write expense record to Supabase
     """
-    # Step 1: Classify
-    classification = await _classify_expense(ocr_result)
+    # Step 1: Classify (informed by this business's past corrections)
+    classification = await _classify_expense(ocr_result, business_id)
 
     amount = ocr_result.get("amount")
     vendor_name = ocr_result.get("vendor_name", "Unknown Vendor")
@@ -170,7 +203,11 @@ async def run_accounting_agent(receipt_id: str, business_id: str, ocr_result: di
         "gst_rate": gst_rate,
         "itc_eligible": itc_eligible,
         "is_duplicate": is_duplicate,
-        "agent_tags": ["auto_categorized"],
+        "agent_tags": (
+            ["auto_categorized", "learned_from_correction"]
+            if classification.get("_source") == "learned_from_correction"
+            else ["auto_categorized"]
+        ),
         "metadata": {
             "ocr_confidence": ocr_result.get("confidence"),
             "is_business_expense": classification.get("is_business_expense", True),

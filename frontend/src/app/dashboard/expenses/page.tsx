@@ -52,6 +52,13 @@ const CATEGORY_COLOR: Record<string, string> = {
 };
 const colorFor = (c: string | null) => CATEGORY_COLOR[c ?? ""] ?? "#64748b";
 
+// Must match EXPENSE_CATEGORIES in backend/app/agents/accounting_agent.py.
+const ALL_CATEGORIES = [
+  "Food & Dining", "Travel & Transport", "Office Supplies", "Software & Subscriptions",
+  "Utilities", "Medical & Health", "Marketing & Advertising", "Rent & Facilities",
+  "Professional Services", "Equipment", "Other",
+];
+
 export default function ExpensesPage() {
   const { businessId, authedFetch } = useBusiness();
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -59,6 +66,30 @@ export default function ExpensesPage() {
   const [usingSample, setUsingSample] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("All");
   const [query, setQuery] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [justLearnedId, setJustLearnedId] = useState<string | null>(null);
+
+  // Correct an expense's category. Optimistic update; records a learning signal
+  // server-side (PATCH /expenses/{id}) so future receipts from this vendor
+  // categorize the same way. Reverts on failure. Disabled on sample data.
+  async function saveCategory(exp: Expense, category: string) {
+    setEditingId(null);
+    if (category === exp.category || usingSample) return;
+    const prev = exp.category;
+    setExpenses(list => list.map(x => (x.id === exp.id ? { ...x, category } : x)));
+    try {
+      const res = await authedFetch(`/api/v1/expenses/${exp.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category }),
+      });
+      if (!res.ok) throw new Error("bad status");
+      setJustLearnedId(exp.id);
+      setTimeout(() => setJustLearnedId(id => (id === exp.id ? null : id)), 2600);
+    } catch {
+      setExpenses(list => list.map(x => (x.id === exp.id ? { ...x, category: prev } : x)));
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -218,10 +249,36 @@ export default function ExpensesPage() {
                       )}
                     </td>
                     <td style={{ padding: "13px 16px", fontSize: "0.82rem" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#cbd5e1" }}>
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(e.category) }} />
-                        {e.category ?? "Uncategorized"}
-                      </span>
+                      {editingId === e.id ? (
+                        <select
+                          autoFocus
+                          defaultValue={e.category ?? "Other"}
+                          onBlur={() => setEditingId(null)}
+                          onChange={ev => saveCategory(e, ev.target.value)}
+                          style={{
+                            background: "#1a2235", border: "1px solid rgba(99,102,241,0.5)",
+                            borderRadius: 8, padding: "5px 8px", color: "#f1f5f9",
+                            fontSize: "0.8rem", outline: "none",
+                          }}>
+                          {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => !usingSample && setEditingId(e.id)}
+                          title={usingSample ? "Connect the backend to edit" : "Click to correct — the app learns from this"}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 7, color: "#cbd5e1",
+                            background: "transparent", border: "none", padding: 0,
+                            cursor: usingSample ? "default" : "pointer", fontSize: "0.82rem",
+                            borderBottom: usingSample ? "none" : "1px dashed rgba(255,255,255,0.15)",
+                          }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(e.category) }} />
+                          {e.category ?? "Uncategorized"}
+                          {justLearnedId === e.id && (
+                            <span style={{ marginLeft: 6, fontSize: "0.68rem", color: "#818cf8" }}>✨ learned</span>
+                          )}
+                        </button>
+                      )}
                     </td>
                     <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#64748b" }}>{e.expense_date}</td>
                     <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#10b981", textAlign: "right" }}>

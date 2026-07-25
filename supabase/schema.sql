@@ -363,3 +363,30 @@ alter table public.api_keys enable row level security;
 
 create policy "API keys visible to members" on public.api_keys
   for select using (is_business_member(business_id));
+
+-- ============================================================
+-- EXPENSE CORRECTIONS (Correction-Feedback Loop — Phase 2 follow-up)
+-- Records every human category fix so categorization learns per-business:
+--   Tier 1 — confident vendor→category prior applied deterministically (no LLM)
+--   Tier 2 — recent corrections injected as few-shot examples for the LLM
+-- See docs/CORRECTION_FEEDBACK_LOOP.md.
+-- ============================================================
+create table public.expense_corrections (
+  id                 uuid primary key default uuid_generate_v4(),
+  business_id        uuid not null references public.businesses(id) on delete cascade,
+  expense_id         uuid references public.expenses(id) on delete set null,
+  vendor_name        text,
+  raw_text_excerpt   text,
+  original_category  text,
+  corrected_category text not null,
+  corrected_by       uuid references public.profiles(id),
+  created_at         timestamptz not null default now()
+);
+
+create index on public.expense_corrections(business_id, vendor_name);
+create index on public.expense_corrections(business_id, created_at desc);
+
+alter table public.expense_corrections enable row level security;
+
+create policy "Corrections visible to members" on public.expense_corrections
+  for select using (is_business_member(business_id));
