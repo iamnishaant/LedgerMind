@@ -1,7 +1,7 @@
 # AI FinanceOS — Project Status
 
-**As of: 2026-07-21**
-**Latest commit:** `ae2dab4` — "Add Phase 10: API keys + ERP export (final Phase 10 piece)" (pushed to `origin/main`)
+**As of: 2026-07-25**
+**Latest commit:** `ae2dab4` — "Add Phase 10: API keys + ERP export (final Phase 10 piece)" (pushed to `origin/main`); post-roadmap enhancements on branch `feat/correction-loop-and-enhancements`
 
 This is a snapshot, not a roadmap or audit — see `AUDIT_REPORT.md` (phase-by-phase completion
 detail, 2026-07-14) and `STRENGTHENING_ROADMAP.md` (the hardening plan this status reflects
@@ -30,6 +30,44 @@ log, teams & roles, approvals, API keys + export) are all done.
 | 8 — Automations (Gmail) | 🟡 Code done; real OAuth click-through still pending (needs a human browser) |
 | 9 — Multi-Agent / Fraud | 🟢 Done |
 | 10 — Enterprise | 🟢 Done |
+
+---
+
+## What changed since 2026-07-21 (post-roadmap enhancements)
+
+Branch `feat/correction-loop-and-enhancements`. All the roadmap phases were already done; this pass
+closed the highest-value follow-ups. Full backend suite is now **117 tests** (108 → 117).
+
+### Correction-feedback loop (Phase 2 follow-up) — built
+Categorization now learns per-business from user corrections — the live, per-tenant alternative to
+fine-tuning described in `docs/CORRECTION_FEEDBACK_LOOP.md`:
+- New `expense_corrections` table (migration `0007`, applied live + verified) records every human
+  category fix.
+- `app/agents/vendor_memory.py` — **Tier 1** applies a confident vendor→category prior
+  deterministically (no LLM); **Tier 2** injects recent corrections as few-shot examples otherwise.
+  Cold start (no corrections) behaves exactly as before.
+- `PATCH /api/v1/expenses/{id}` captures corrections; the Expenses page category cell is now
+  click-to-edit with a "✨ learned" hint.
+- 9 new DB-backed tests, including a cross-tenant leakage guard.
+
+### Chat: streaming + fast model
+- `POST /api/v1/chat/stream` streams the answer token-by-token over SSE (`stream_chat_agent`), with
+  the chat page rendering tokens live. Optional `CHAT_MODEL` setting runs chat on a fast model
+  (e.g. Claude Haiku) independent of the default agent model.
+
+### More ingest connectors (scaffold)
+- Shared `OAuth2Connector` base (generalizes Gmail's token refresh) + protocol-conforming
+  Drive/Dropbox/Outlook stubs, each documenting its real API surface. Deliberately **not** registered
+  in `sync.py` until each has a real OAuth app + list/fetch methods — so nothing falsely advertises
+  as available.
+
+### Global frontend error boundary
+- `app/error.tsx` (whole app) + `app/global-error.tsx` (root-layout failures) replace the previous
+  per-page-only try/catch — closes the "no global error boundary" gap from the audit.
+
+### Production deployment scaffold
+- Dockerfiles (backend + frontend), `docker-compose.yml`, and `vercel.json`. `docker compose config`
+  validates; images not yet built here (needs the Docker daemon + the heavy PaddleOCR image build).
 
 ---
 
@@ -141,8 +179,8 @@ Phase 10 total: 61 new backend tests. **Full suite: 108/108 passing.**
    only the manual "Sync now" button is live today.
 3. **First real GitHub Actions run unconfirmed** — the workflow is written and pushed but hasn't
    been watched executing; first run may need one round of adjustment.
-4. Minor, noticed in passing: `frontend/package.json` lists both `framer-motion` and `motion` —
-   duplicates the animation runtime; a leftover from before this project standardized on `motion`.
+4. ~~`frontend/package.json` lists both `framer-motion` and `motion`~~ — resolved: `framer-motion`
+   removed, build re-verified green (branch `chore/cleanup-and-deploy-scaffold`).
 5. Migrations `0004`–`0006` were applied directly against the live dev Supabase project via psycopg
    during this session (each in its own transaction, each verified live afterward) — worth knowing
    if this project is ever cloned into a fresh Supabase project: `schema.sql` already reflects the

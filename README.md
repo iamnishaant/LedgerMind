@@ -102,12 +102,12 @@ npm run dev
 
 ## Database
 
-`supabase/schema.sql` is the source of truth for a **fresh** install — run it once in the Supabase SQL editor. `supabase/migrations/` holds the incremental history (`0002`–`0006`) for applying changes to an existing database instead.
+`supabase/schema.sql` is the source of truth for a **fresh** install — run it once in the Supabase SQL editor. `supabase/migrations/` holds the incremental history (`0002`–`0007`) for applying changes to an existing database instead.
 
 ## Testing
 
 ```bash
-# backend — 108 tests, live against a real (dev) Supabase project, no mocking
+# backend — 117 tests, live against a real (dev) Supabase project, no mocking
 cd backend && venv\Scripts\python -m pytest tests/
 
 # frontend — pure-logic unit tests
@@ -118,8 +118,15 @@ Backend tests exercise real auth/RLS, the deterministic agents (GST, fraud, budg
 
 ## Roadmap / next
 
-- **Correction-feedback loop** — make categorization learn per-business from user corrections (a live, per-tenant alternative to fine-tuning). Design: [`docs/CORRECTION_FEEDBACK_LOOP.md`](docs/CORRECTION_FEEDBACK_LOOP.md).
-- **Chat latency** — move to a fast hosted model (e.g. Claude Haiku) and stream responses (SSE).
+- **Correction-feedback loop** — ✅ built. Categorization now learns per-business from user
+  corrections (a live, per-tenant alternative to fine-tuning): a confident vendor→category prior is
+  applied deterministically (no LLM), and recent corrections are injected as few-shot examples
+  otherwise. Correct a category on the Expenses page to teach it. Design:
+  [`docs/CORRECTION_FEEDBACK_LOOP.md`](docs/CORRECTION_FEEDBACK_LOOP.md).
+- **Chat streaming** — ✅ the assistant streams token-by-token over SSE (`POST /api/v1/chat/stream`)
+  and can run on a fast model via the optional `CHAT_MODEL` setting (e.g. Claude Haiku).
+- **More ingest connectors** — Google Drive / Dropbox / Outlook are scaffolded on a shared
+  `OAuth2Connector` (token handling done); each needs its OAuth app + list/fetch methods to finish.
 - Complete the Phase 8 Gmail OAuth click-through and enable Inngest scheduled polling.
 
 See [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for the current snapshot and [`docs/BUILD_ROADMAP.md`](docs/BUILD_ROADMAP.md) for the full phase plan.
