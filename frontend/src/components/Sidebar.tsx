@@ -38,19 +38,21 @@ export default function Sidebar() {
   return (
     <aside style={{
       width: "240px", minHeight: "100vh",
-      background: "rgba(17, 24, 39, 0.95)",
+      background: "rgba(9, 13, 22, 0.96)",
+      backdropFilter: "blur(12px)",
       borderRight: "1px solid rgba(255,255,255,0.06)",
       display: "flex", flexDirection: "column",
-      padding: "24px 12px", gap: "4px", flexShrink: 0,
+      padding: "22px 12px", gap: "2px", flexShrink: 0,
     }}>
       {/* Logo */}
       <div style={{ padding: "0 12px 28px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div style={{
             width: 36, height: 36, borderRadius: "10px",
-            background: "linear-gradient(135deg, #6366f1, #22d3ee)",
+            background: "linear-gradient(135deg, #6366f1, #4f46e5)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "18px", boxShadow: "0 0 20px rgba(99,102,241,0.4)",
+            fontSize: "18px",
+            boxShadow: "0 4px 14px -4px rgba(79,70,229,0.6), inset 0 1px 0 rgba(255,255,255,0.15)",
           }}>🤖</div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f1f5f9" }}>AI FinanceOS</div>
@@ -66,35 +68,43 @@ export default function Sidebar() {
         return (
           <Link key={href} href={isLocked ? "#" : href} style={{ textDecoration: "none" }}>
             <div style={{
-              display: "flex", alignItems: "center", gap: "10px",
-              padding: "9px 12px", borderRadius: "10px", cursor: isLocked ? "default" : "pointer",
-              background: isActive ? "rgba(99,102,241,0.15)" : "transparent",
-              color: isActive ? "#818cf8" : isLocked ? "#374151" : "#94a3b8",
-              transition: "all 0.15s ease",
+              display: "flex", alignItems: "center", gap: "11px",
+              padding: "9px 12px 9px 14px", borderRadius: "10px", cursor: isLocked ? "default" : "pointer",
+              background: isActive ? "rgba(99,102,241,0.12)" : "transparent",
+              color: isActive ? "#a5b4fc" : isLocked ? "#3a4661" : "#94a3b8",
+              transition: "background-color 0.15s ease, color 0.15s ease",
               position: "relative",
             }}
             onMouseEnter={e => {
-              if (!isActive && !isLocked) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.04)";
+              if (!isActive && !isLocked) {
+                const el = e.currentTarget as HTMLDivElement;
+                el.style.background = "rgba(255,255,255,0.04)";
+                el.style.color = "#cbd5e1";
+              }
             }}
             onMouseLeave={e => {
-              if (!isActive && !isLocked) (e.currentTarget as HTMLDivElement).style.background = "transparent";
+              if (!isActive && !isLocked) {
+                const el = e.currentTarget as HTMLDivElement;
+                el.style.background = "transparent";
+                el.style.color = "#94a3b8";
+              }
             }}>
-              <Icon size={17} />
-              <span style={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 400 }}>{label}</span>
+              {isActive && (
+                <div style={{
+                  position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)",
+                  width: 3, height: 18, borderRadius: "0 3px 3px 0",
+                  background: "#818cf8",
+                }} />
+              )}
+              <Icon size={17} strokeWidth={isActive ? 2.4 : 2} />
+              <span style={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 500, letterSpacing: "-0.01em" }}>{label}</span>
               {isLocked && (
                 <span style={{
-                  marginLeft: "auto", fontSize: "0.6rem", padding: "2px 6px",
-                  background: "rgba(255,255,255,0.05)", borderRadius: "4px", color: "#374151",
+                  marginLeft: "auto", fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px",
+                  background: "rgba(255,255,255,0.04)", borderRadius: "5px", color: "#3a4661",
                 }}>
                   Ph.{phase}
                 </span>
-              )}
-              {isActive && (
-                <div style={{
-                  position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
-                  width: 3, height: 20, borderRadius: "2px",
-                  background: "linear-gradient(to bottom, #6366f1, #22d3ee)",
-                }} />
               )}
             </div>
           </Link>

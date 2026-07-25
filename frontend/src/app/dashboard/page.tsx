@@ -7,19 +7,19 @@ import { useBusiness } from "@/lib/business-context";
 
 // ── Mock data ──────────────────────────────────────────────
 const summaryStats = [
-  { label: "Total Spend",         num: 124820, prefix: "₹", suffix: "", change: "+8.2%", up: true,  icon: IndianRupee,  color: "var(--chart-1)" },
-  { label: "Receipts This Month", num: 47,     prefix: "",  suffix: "", change: "+12",   up: true,  icon: Receipt,      color: "var(--chart-2)" },
-  { label: "GST Recoverable",     num: 18430,  prefix: "₹", suffix: "", change: "New",   up: true,  icon: CheckCircle2, color: "var(--chart-3)" },
-  { label: "Needs Review",        num: 3,      prefix: "",  suffix: "", change: "Action",up: false, icon: AlertCircle,  color: "var(--destructive)" },
+  { label: "Total Spend",         num: 124820, prefix: "₹", suffix: "", change: "+8.2%", up: true,  icon: IndianRupee,  accent: "#6366f1" },
+  { label: "Receipts This Month", num: 47,     prefix: "",  suffix: "", change: "+12",   up: true,  icon: Receipt,      accent: "#22d3ee" },
+  { label: "GST Recoverable",     num: 18430,  prefix: "₹", suffix: "", change: "New",   up: true,  icon: CheckCircle2, accent: "#10b981" },
+  { label: "Needs Review",        num: 3,      prefix: "",  suffix: "", change: "Action",up: false, icon: AlertCircle,  accent: "#f59e0b" },
 ];
 
 const spendByCategory = [
-  { category: "Software",       amount: 42000, color: "var(--chart-1)" },
-  { category: "Travel",         amount: 28500, color: "var(--chart-2)" },
-  { category: "Office",         amount: 19200, color: "var(--chart-3)" },
-  { category: "Marketing",      amount: 15800, color: "var(--chart-4)" },
-  { category: "Food & Dining",  amount: 12100, color: "var(--chart-5)" },
-  { category: "Utilities",      amount: 7220,  color: "var(--chart-1)" },
+  { category: "Software",       amount: 42000, color: "#6366f1" },
+  { category: "Travel",         amount: 28500, color: "#22d3ee" },
+  { category: "Office",         amount: 19200, color: "#10b981" },
+  { category: "Marketing",      amount: 15800, color: "#f59e0b" },
+  { category: "Food & Dining",  amount: 12100, color: "#ec4899" },
+  { category: "Utilities",      amount: 7220,  color: "#8b5cf6" },
 ];
 
 const recentReceipts = [
@@ -35,7 +35,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
       <div className="bg-popover border text-popover-foreground rounded-lg p-3 shadow-md">
         <p className="text-muted-foreground text-xs">{payload[0].payload.category}</p>
-        <p className="font-bold">₹{payload[0].value.toLocaleString("en-IN")}</p>
+        <p className="font-bold tabular">₹{payload[0].value.toLocaleString("en-IN")}</p>
       </div>
     );
   }
@@ -65,20 +65,37 @@ export default function DashboardPage() {
           const Icon = stat.icon;
           return (
             <StaggerItem key={stat.label}>
-              <div className="bg-card text-card-foreground border rounded-xl shadow-sm p-5 hover:-translate-y-1 hover:shadow-md transition-all">
-                <div className="flex justify-between items-start">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-secondary">
-                    <Icon size={18} className="text-primary" />
+              <div
+                className="group relative overflow-hidden rounded-xl p-5 transition-all duration-200 hover:-translate-y-1"
+                style={{
+                  background: "linear-gradient(180deg, rgba(30,41,59,0.5), rgba(15,23,42,0.5))",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: "0 1px 2px rgba(2,6,23,0.4)",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${stat.accent}66`; e.currentTarget.style.boxShadow = `0 12px 30px -14px ${stat.accent}80`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(2,6,23,0.4)"; }}
+              >
+                {/* subtle accent glow in the corner */}
+                <div style={{ position: "absolute", top: -30, right: -30, width: 90, height: 90, borderRadius: "50%", background: stat.accent, opacity: 0.1, filter: "blur(28px)", pointerEvents: "none" }} />
+                <div className="relative flex justify-between items-start">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ background: `${stat.accent}1f`, border: `1px solid ${stat.accent}33` }}>
+                    <Icon size={18} style={{ color: stat.accent }} />
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${stat.up ? 'bg-secondary text-primary' : 'bg-destructive/10 text-destructive'}`}>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{
+                      background: stat.up ? "rgba(16,185,129,0.13)" : "rgba(245,158,11,0.13)",
+                      color: stat.up ? "#34d399" : "#fbbf24",
+                      border: `1px solid ${stat.up ? "rgba(16,185,129,0.26)" : "rgba(245,158,11,0.26)"}`,
+                    }}>
                     {stat.change}
                   </span>
                 </div>
-                <div className="mt-4">
-                  <div className="text-2xl font-bold">
+                <div className="relative mt-4">
+                  <div className="tabular font-bold tracking-tight" style={{ fontSize: "1.7rem", color: "#f8fafc", letterSpacing: "-0.03em" }}>
                     <AnimatedNumber value={stat.num} prefix={stat.prefix} suffix={stat.suffix} />
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
+                  <div className="text-xs mt-1" style={{ color: "#94a3b8" }}>{stat.label}</div>
                 </div>
               </div>
             </StaggerItem>
@@ -92,13 +109,21 @@ export default function DashboardPage() {
         <Reveal className="bg-card text-card-foreground border rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold mb-5">Spend by Category</h2>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={spendByCategory} barSize={28}>
-              <XAxis dataKey="category" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
+            <BarChart data={spendByCategory} barSize={30} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+              <defs>
+                {spendByCategory.map((entry, i) => (
+                  <linearGradient key={i} id={`bar-${i}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={entry.color} stopOpacity={0.95} />
+                    <stop offset="100%" stopColor={entry.color} stopOpacity={0.35} />
+                  </linearGradient>
+                ))}
+              </defs>
+              <XAxis dataKey="category" tick={{ fill: "#94a3b8", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis hide />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--secondary)" }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.08)" }} />
               <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                 {spendByCategory.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
+                  <Cell key={i} fill={`url(#bar-${i})`} stroke={entry.color} strokeOpacity={0.4} />
                 ))}
               </Bar>
             </BarChart>
@@ -154,8 +179,8 @@ export default function DashboardPage() {
                   className="border-b border-border hover:bg-muted/50 transition-colors"
                 >
                   <td className="p-3 text-sm font-medium">{r.vendor}</td>
-                  <td className="p-3 text-sm">₹{r.amount.toLocaleString("en-IN")}</td>
-                  <td className="p-3 text-sm text-muted-foreground">{r.date}</td>
+                  <td className="p-3 text-sm tabular">₹{r.amount.toLocaleString("en-IN")}</td>
+                  <td className="p-3 text-sm text-muted-foreground tabular">{r.date}</td>
                   <td className="p-3">
                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
                       r.status === 'completed' ? 'bg-primary text-primary-foreground' : 

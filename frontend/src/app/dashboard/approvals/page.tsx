@@ -138,7 +138,7 @@ export default function ApprovalsPage() {
                         {e.category ?? "Uncategorized"} · {e.expense_date}
                       </span>
                     </div>
-                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f1f5f9", marginTop: 4 }}>
+                    <div className="tabular" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f1f5f9", marginTop: 4, letterSpacing: "-0.01em" }}>
                       ₹{e.amount.toLocaleString("en-IN")}
                     </div>
                   </div>

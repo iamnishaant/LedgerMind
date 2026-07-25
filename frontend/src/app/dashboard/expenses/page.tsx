@@ -168,10 +168,10 @@ export default function ExpensesPage() {
                   <Icon size={18} color={t.color} />
                 </div>
                 <div>
-                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f1f5f9" }}>
+                  <div className="tabular" style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f1f5f9", letterSpacing: "-0.02em" }}>
                     <AnimatedNumber value={t.value} prefix={t.prefix} />
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b" }}>{t.label}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{t.label}</div>
                 </div>
               </div>
             </StaggerItem>
@@ -221,13 +221,12 @@ export default function ExpensesPage() {
                   <motion.tr
                     key={e.id}
                     layout
+                    className="data-row"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.3) }}
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-                    onMouseEnter={ev => (ev.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)"}
-                    onMouseLeave={ev => (ev.currentTarget as HTMLElement).style.background = "transparent"}>
+                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                     <td style={{ padding: "13px 16px", fontSize: "0.875rem", color: "#f1f5f9", fontWeight: 500 }}>
                       {e.vendor_name ?? "Unknown"}
                       {e.is_duplicate && (
@@ -280,11 +279,11 @@ export default function ExpensesPage() {
                         </button>
                       )}
                     </td>
-                    <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#64748b" }}>{e.expense_date}</td>
-                    <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#10b981", textAlign: "right" }}>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.8rem", color: "#64748b" }}>{e.expense_date}</td>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#10b981", textAlign: "right" }}>
                       {e.gst_amount ? `₹${e.gst_amount.toLocaleString("en-IN")}` : "—"}
                     </td>
-                    <td style={{ padding: "13px 16px", fontSize: "0.9rem", color: "#f1f5f9", fontWeight: 600, textAlign: "right" }}>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.9rem", color: "#f1f5f9", fontWeight: 600, textAlign: "right", letterSpacing: "-0.01em" }}>
                       ₹{e.amount.toLocaleString("en-IN")}
                     </td>
                   </motion.tr>
