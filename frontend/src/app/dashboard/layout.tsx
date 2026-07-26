@@ -48,7 +48,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           flex: 1,
           padding: "32px",
           overflowY: "auto",
-          background: "radial-gradient(ellipse at top left, rgba(99,102,241,0.05) 0%, transparent 60%)",
+          background: "radial-gradient(ellipse at top left, rgba(184,134,46,0.06) 0%, transparent 60%)",
         }}>
           {children}
         </main>

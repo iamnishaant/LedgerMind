@@ -26,8 +26,8 @@ interface Expense {
 }
 
 const FRAUD_BADGE: Record<string, { label: string; color: string }> = {
-  high: { label: "high risk", color: "#f87171" },
-  medium: { label: "review", color: "#f59e0b" },
+  high: { label: "high risk", color: "#b23a2e" },
+  medium: { label: "review", color: "#b9791c" },
 };
 
 // ── Illustrative fallback data (used when the API is unreachable) ──
@@ -43,14 +43,14 @@ const SAMPLE: Expense[] = [
 ];
 
 const CATEGORY_COLOR: Record<string, string> = {
-  "Software & Subscriptions": "#6366f1",
-  "Travel & Transport": "#22d3ee",
-  "Office Supplies": "#10b981",
-  "Marketing & Advertising": "#f59e0b",
-  "Food & Dining": "#ec4899",
-  "Utilities": "#8b5cf6",
+  "Software & Subscriptions": "#b8862e",
+  "Travel & Transport": "#4f7268",
+  "Office Supplies": "#2f8f52",
+  "Marketing & Advertising": "#b9791c",
+  "Food & Dining": "#8a4a6b",
+  "Utilities": "#6b4a8a",
 };
-const colorFor = (c: string | null) => CATEGORY_COLOR[c ?? ""] ?? "#64748b";
+const colorFor = (c: string | null) => CATEGORY_COLOR[c ?? ""] ?? "#8a7a64";
 
 // Must match EXPENSE_CATEGORIES in backend/app/agents/accounting_agent.py.
 const ALL_CATEGORIES = [
@@ -132,21 +132,21 @@ export default function ExpensesPage() {
     <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#f1f5f9" }}>Expenses</h1>
-          <p style={{ color: "#64748b", marginTop: "4px" }}>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15" }}>Expenses</h1>
+          <p style={{ color: "#8a7a64", marginTop: "4px" }}>
             Every booked expense, auto-categorized by the Accounting agent.
-            {usingSample && <span style={{ color: "#f59e0b" }}> · showing sample data (backend offline)</span>}
+            {usingSample && <span style={{ color: "#b9791c" }}> · showing sample data (backend offline)</span>}
           </p>
         </div>
         <div style={{ position: "relative" }}>
-          <Search size={15} color="#64748b" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
+          <Search size={15} color="#8a7a64" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search vendor or category…"
             style={{
-              background: "rgba(26,34,53,0.6)", border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 10, padding: "9px 14px 9px 34px", color: "#f1f5f9",
+              background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)",
+              borderRadius: 10, padding: "9px 14px 9px 34px", color: "#241c15",
               fontSize: "0.85rem", outline: "none", width: 240,
             }}
           />
@@ -156,9 +156,9 @@ export default function ExpensesPage() {
       {/* Summary tiles */}
       <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "22px" }}>
         {[
-          { label: "Total (filtered)", value: total, prefix: "₹", icon: ReceiptText, color: "#6366f1" },
-          { label: "GST recoverable", value: totalGst, prefix: "₹", icon: Tag, color: "#10b981" },
-          { label: "Expenses shown", value: filtered.length, prefix: "", icon: AlertTriangle, color: "#22d3ee" },
+          { label: "Total (filtered)", value: total, prefix: "₹", icon: ReceiptText, color: "#b8862e" },
+          { label: "GST recoverable", value: totalGst, prefix: "₹", icon: Tag, color: "#2f8f52" },
+          { label: "Expenses shown", value: filtered.length, prefix: "", icon: AlertTriangle, color: "#4f7268" },
         ].map((t) => {
           const Icon = t.icon;
           return (
@@ -168,10 +168,10 @@ export default function ExpensesPage() {
                   <Icon size={18} color={t.color} />
                 </div>
                 <div>
-                  <div className="tabular" style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f1f5f9", letterSpacing: "-0.02em" }}>
+                  <div className="tabular" style={{ fontSize: "1.35rem", fontWeight: 700, color: "#241c15", letterSpacing: "-0.02em" }}>
                     <AnimatedNumber value={t.value} prefix={t.prefix} />
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{t.label}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#6b5d49" }}>{t.label}</div>
                 </div>
               </div>
             </StaggerItem>
@@ -190,9 +190,9 @@ export default function ExpensesPage() {
               style={{
                 padding: "7px 14px", borderRadius: 999, fontSize: "0.8rem", fontWeight: 600,
                 cursor: "pointer", transition: "all 0.15s ease",
-                border: `1px solid ${active ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.08)"}`,
-                background: active ? "rgba(99,102,241,0.16)" : "transparent",
-                color: active ? "#818cf8" : "#94a3b8",
+                border: `1px solid ${active ? "rgba(184,134,46,0.5)" : "rgba(36,28,21,0.09)"}`,
+                background: active ? "rgba(184,134,46,0.14)" : "transparent",
+                color: active ? "#9c6b1f" : "#6b5d49",
               }}>
               {c}
             </button>
@@ -204,18 +204,18 @@ export default function ExpensesPage() {
       <div className="glass-card" style={{ padding: "8px 8px 12px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <tr style={{ borderBottom: "1px solid rgba(36,28,21,0.07)" }}>
               {["Vendor", "Category", "Date", "GST", "Amount"].map((h, i) => (
-                <th key={h} style={{ textAlign: i > 2 ? "right" : "left", padding: "12px 16px", fontSize: "0.72rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                <th key={h} style={{ textAlign: i > 2 ? "right" : "left", padding: "12px 16px", fontSize: "0.72rem", color: "#8a7a64", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             <AnimatePresence mode="popLayout" initial={false}>
               {loading ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Loading expenses…</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>Loading expenses…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>No expenses match this filter.</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>No expenses match this filter.</td></tr>
               ) : (
                 filtered.map((e, i) => (
                   <motion.tr
@@ -226,11 +226,11 @@ export default function ExpensesPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.3) }}
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <td style={{ padding: "13px 16px", fontSize: "0.875rem", color: "#f1f5f9", fontWeight: 500 }}>
+                    style={{ borderBottom: "1px solid rgba(36,28,21,0.05)" }}>
+                    <td style={{ padding: "13px 16px", fontSize: "0.875rem", color: "#241c15", fontWeight: 500 }}>
                       {e.vendor_name ?? "Unknown"}
                       {e.is_duplicate && (
-                        <span style={{ marginLeft: 8, fontSize: "0.66rem", fontWeight: 700, color: "#f59e0b", background: "rgba(245,158,11,0.14)", padding: "2px 7px", borderRadius: 999, textTransform: "uppercase" }}>
+                        <span style={{ marginLeft: 8, fontSize: "0.66rem", fontWeight: 700, color: "#b9791c", background: "rgba(245,158,11,0.14)", padding: "2px 7px", borderRadius: 999, textTransform: "uppercase" }}>
                           dup
                         </span>
                       )}
@@ -255,8 +255,8 @@ export default function ExpensesPage() {
                           onBlur={() => setEditingId(null)}
                           onChange={ev => saveCategory(e, ev.target.value)}
                           style={{
-                            background: "#1a2235", border: "1px solid rgba(99,102,241,0.5)",
-                            borderRadius: 8, padding: "5px 8px", color: "#f1f5f9",
+                            background: "#ffffff", border: "1px solid rgba(184,134,46,0.5)",
+                            borderRadius: 8, padding: "5px 8px", color: "#241c15",
                             fontSize: "0.8rem", outline: "none",
                           }}>
                           {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -266,24 +266,24 @@ export default function ExpensesPage() {
                           onClick={() => !usingSample && setEditingId(e.id)}
                           title={usingSample ? "Connect the backend to edit" : "Click to correct — the app learns from this"}
                           style={{
-                            display: "inline-flex", alignItems: "center", gap: 7, color: "#cbd5e1",
+                            display: "inline-flex", alignItems: "center", gap: 7, color: "#4a3d2c",
                             background: "transparent", border: "none", padding: 0,
                             cursor: usingSample ? "default" : "pointer", fontSize: "0.82rem",
-                            borderBottom: usingSample ? "none" : "1px dashed rgba(255,255,255,0.15)",
+                            borderBottom: usingSample ? "none" : "1px dashed rgba(36,28,21,0.18)",
                           }}>
                           <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(e.category) }} />
                           {e.category ?? "Uncategorized"}
                           {justLearnedId === e.id && (
-                            <span style={{ marginLeft: 6, fontSize: "0.68rem", color: "#818cf8" }}>✨ learned</span>
+                            <span style={{ marginLeft: 6, fontSize: "0.68rem", color: "#9c6b1f" }}>✨ learned</span>
                           )}
                         </button>
                       )}
                     </td>
-                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.8rem", color: "#64748b" }}>{e.expense_date}</td>
-                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#10b981", textAlign: "right" }}>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.8rem", color: "#8a7a64" }}>{e.expense_date}</td>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#2f8f52", textAlign: "right" }}>
                       {e.gst_amount ? `₹${e.gst_amount.toLocaleString("en-IN")}` : "—"}
                     </td>
-                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.9rem", color: "#f1f5f9", fontWeight: 600, textAlign: "right", letterSpacing: "-0.01em" }}>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.9rem", color: "#241c15", fontWeight: 600, textAlign: "right", letterSpacing: "-0.01em" }}>
                       ₹{e.amount.toLocaleString("en-IN")}
                     </td>
                   </motion.tr>

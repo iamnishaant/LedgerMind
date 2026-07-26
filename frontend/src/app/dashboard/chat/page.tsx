@@ -111,21 +111,21 @@ export default function ChatPage() {
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", height: "calc(100vh - 64px)", display: "flex", flexDirection: "column" }}>
       <Reveal y={12} style={{ marginBottom: 18 }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 10 }}>
-          <BrainCircuit size={24} color="#818cf8" /> AI Chat
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
+          <BrainCircuit size={24} color="#9c6b1f" /> AI Chat
         </h1>
-        <p style={{ color: "#64748b", marginTop: 4 }}>Ask about your finances — answers are computed from your real expense data.</p>
+        <p style={{ color: "#8a7a64", marginTop: 4 }}>Ask about your finances — answers are computed from your real expense data.</p>
       </Reveal>
 
       {/* Messages */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 14, padding: "8px 4px" }}>
         {empty && (
           <div style={{ margin: "auto", textAlign: "center", maxWidth: 520 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 16, margin: "0 auto 16px", background: "linear-gradient(135deg, #6366f1, #22d3ee)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 30px rgba(99,102,241,0.4)" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, margin: "0 auto 16px", background: "linear-gradient(135deg, #b8862e, #a8541f)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px -4px rgba(184,134,46,0.4)" }}>
               <Sparkles size={26} color="#fff" />
             </div>
             <h2 style={{ fontSize: "1.15rem", fontWeight: 600, marginBottom: 6 }}>Ask me anything about your books</h2>
-            <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: 20 }}>I run real queries over your expenses — no made-up numbers.</p>
+            <p style={{ color: "#8a7a64", fontSize: "0.88rem", marginBottom: 20 }}>I run real queries over your expenses — no made-up numbers.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
               {SUGGESTIONS.map(s => (
                 <button key={s} onClick={() => send(s)} className="btn-ghost" style={{ fontSize: "0.82rem", fontWeight: 500, textAlign: "left" }}>
@@ -148,17 +148,17 @@ export default function ChatPage() {
               <div style={{
                 maxWidth: "78%", padding: "12px 16px", borderRadius: 16, fontSize: "0.92rem", lineHeight: 1.55,
                 whiteSpace: "pre-wrap", wordBreak: "break-word",
-                background: m.role === "user" ? "linear-gradient(135deg, #6366f1, #4f46e5)" : "rgba(26,34,53,0.7)",
-                border: m.role === "user" ? "none" : "1px solid rgba(255,255,255,0.08)",
-                color: "#f1f5f9",
+                background: m.role === "user" ? "linear-gradient(135deg, #c9962e, #a8541f)" : "#ffffff",
+                border: m.role === "user" ? "none" : "1px solid rgba(36,28,21,0.09)",
+                color: m.role === "user" ? "#ffffff" : "#241c15",
                 borderBottomRightRadius: m.role === "user" ? 4 : 16,
                 borderBottomLeftRadius: m.role === "assistant" ? 4 : 16,
               }}>
                 {m.content}
                 {m.tools_used && m.tools_used.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(36,28,21,0.08)" }}>
                     {Array.from(new Set(m.tools_used)).map(t => (
-                      <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.68rem", color: "#22d3ee", background: "rgba(34,211,238,0.1)", padding: "2px 8px", borderRadius: 999 }}>
+                      <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.68rem", color: "#4f7268", background: "rgba(79,114,104,0.1)", padding: "2px 8px", borderRadius: 999 }}>
                         <Wrench size={11} /> {prettyTool[t] ?? t}
                       </span>
                     ))}
@@ -171,14 +171,14 @@ export default function ChatPage() {
 
         {busy && messages[messages.length - 1]?.role !== "assistant" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", justifyContent: "flex-start" }}>
-            <div style={{ padding: "14px 18px", borderRadius: 16, borderBottomLeftRadius: 4, background: "rgba(26,34,53,0.7)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: 6, alignItems: "center" }}>
+            <div style={{ padding: "14px 18px", borderRadius: 16, borderBottomLeftRadius: 4, background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)", display: "flex", gap: 6, alignItems: "center" }}>
               {[0, 1, 2].map(d => (
                 <motion.span key={d}
                   animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
                   transition={{ duration: 1, repeat: Infinity, delay: d * 0.15 }}
-                  style={{ width: 7, height: 7, borderRadius: "50%", background: "#818cf8" }} />
+                  style={{ width: 7, height: 7, borderRadius: "50%", background: "#9c6b1f" }} />
               ))}
-              <span style={{ color: "#64748b", fontSize: "0.78rem", marginLeft: 6 }}>querying your books…</span>
+              <span style={{ color: "#8a7a64", fontSize: "0.78rem", marginLeft: 6 }}>querying your books…</span>
             </div>
           </motion.div>
         )}
@@ -194,8 +194,8 @@ export default function ChatPage() {
           rows={1}
           style={{
             flex: 1, resize: "none", maxHeight: 120,
-            background: "rgba(26,34,53,0.7)", border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 12, padding: "13px 16px", color: "#f1f5f9", fontSize: "0.9rem",
+            background: "#ffffff", border: "1px solid rgba(36,28,21,0.10)",
+            borderRadius: 12, padding: "13px 16px", color: "#241c15", fontSize: "0.9rem",
             outline: "none", fontFamily: "inherit", lineHeight: 1.5,
           }}
         />

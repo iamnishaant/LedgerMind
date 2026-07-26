@@ -54,22 +54,22 @@ export default function JoinPage() {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: "#0a0f1e", padding: 24, position: "relative", overflow: "hidden",
+      background: "#f8f2e7", padding: 24, position: "relative", overflow: "hidden",
     }}>
-      <div className="orb" style={{ width: 460, height: 460, top: -160, right: "6%", background: "radial-gradient(circle, #6366f1, transparent 70%)" }} />
+      <div className="orb" style={{ width: 460, height: 460, top: -160, right: "6%", background: "radial-gradient(circle, #b8862e, transparent 70%)" }} />
       <Reveal style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 420 }}>
         <div className="ring-card" style={{ padding: 32, textAlign: "center" }}>
           <div style={{
-            width: 44, height: 44, borderRadius: 12, background: "rgba(99,102,241,0.14)",
+            width: 44, height: 44, borderRadius: 12, background: "rgba(184,134,46,0.14)",
             display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px",
           }}>
-            <Users size={22} color="#818cf8" />
+            <Users size={22} color="#9c6b1f" />
           </div>
 
           {(state === "checking" || state === "accepting") && (
             <>
-              <Loader2 size={26} color="#818cf8" style={{ animation: "spin 1s linear infinite", marginBottom: 12 }} />
-              <p style={{ color: "#94a3b8", fontSize: "0.88rem" }}>
+              <Loader2 size={26} color="#9c6b1f" style={{ animation: "spin 1s linear infinite", marginBottom: 12 }} />
+              <p style={{ color: "#6b5d49", fontSize: "0.88rem" }}>
                 {state === "checking" ? "Checking your session…" : "Joining the team…"}
               </p>
             </>
@@ -77,8 +77,8 @@ export default function JoinPage() {
 
           {state === "signed_out" && (
             <>
-              <h1 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#f1f5f9", marginBottom: 8 }}>Log in to accept this invite</h1>
-              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginBottom: 20, lineHeight: 1.6 }}>
+              <h1 className="serif" style={{ fontSize: "1.25rem", fontWeight: 500, color: "#241c15", marginBottom: 8 }}>Log in to accept this invite</h1>
+              <p style={{ color: "#6b5d49", fontSize: "0.85rem", marginBottom: 20, lineHeight: 1.6 }}>
                 Sign in (or create an account), then come back to this link to join the team.
               </p>
               <a href="/login" className="btn-primary" style={{ display: "inline-block", textDecoration: "none" }}>
@@ -89,17 +89,17 @@ export default function JoinPage() {
 
           {state === "done" && (
             <>
-              <CheckCircle2 size={30} color="#10b981" style={{ marginBottom: 12 }} />
-              <h1 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#f1f5f9", marginBottom: 6 }}>You're in</h1>
-              <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Taking you to the dashboard…</p>
+              <CheckCircle2 size={30} color="#2f8f52" style={{ marginBottom: 12 }} />
+              <h1 className="serif" style={{ fontSize: "1.25rem", fontWeight: 500, color: "#241c15", marginBottom: 6 }}>You're in</h1>
+              <p style={{ color: "#6b5d49", fontSize: "0.85rem" }}>Taking you to the dashboard…</p>
             </>
           )}
 
           {state === "error" && (
             <>
-              <XCircle size={30} color="#f87171" style={{ marginBottom: 12 }} />
-              <h1 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#f1f5f9", marginBottom: 6 }}>Couldn't join</h1>
-              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginBottom: 20 }}>{error}</p>
+              <XCircle size={30} color="#b23a2e" style={{ marginBottom: 12 }} />
+              <h1 className="serif" style={{ fontSize: "1.25rem", fontWeight: 500, color: "#241c15", marginBottom: 6 }}>Couldn't join</h1>
+              <p style={{ color: "#6b5d49", fontSize: "0.85rem", marginBottom: 20 }}>{error}</p>
               <a href="/dashboard" className="btn-ghost" style={{ display: "inline-block", textDecoration: "none" }}>
                 Go to dashboard
               </a>

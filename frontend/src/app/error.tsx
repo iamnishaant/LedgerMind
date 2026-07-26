@@ -18,32 +18,32 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      padding: 24, background: "#0b0f1a",
+      padding: 24, background: "#f8f2e7",
     }}>
       <div className="glass-card" style={{ maxWidth: 460, width: "100%", padding: 32, textAlign: "center" }}>
         <div style={{
           width: 52, height: 52, borderRadius: 14, margin: "0 auto 18px",
-          background: "rgba(248,113,113,0.14)", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(178,58,46,0.12)", display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <AlertTriangle size={24} color="#f87171" />
+          <AlertTriangle size={24} color="#b23a2e" />
         </div>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#f1f5f9", marginBottom: 8 }}>
+        <h1 className="serif" style={{ fontSize: "1.3rem", fontWeight: 500, color: "#241c15", marginBottom: 8 }}>
           Something went wrong
         </h1>
-        <p style={{ color: "#94a3b8", fontSize: "0.9rem", marginBottom: 22, lineHeight: 1.5 }}>
+        <p style={{ color: "#6b5d49", fontSize: "0.9rem", marginBottom: 22, lineHeight: 1.5 }}>
           An unexpected error interrupted this page. You can try again — your data is safe.
         </p>
         <button
           onClick={reset}
           style={{
-            padding: "10px 22px", borderRadius: 10, border: "1px solid rgba(99,102,241,0.5)",
-            background: "rgba(99,102,241,0.16)", color: "#818cf8", fontWeight: 600,
+            padding: "10px 22px", borderRadius: 10, border: "1px solid rgba(184,134,46,0.5)",
+            background: "rgba(184,134,46,0.14)", color: "#9c6b1f", fontWeight: 600,
             fontSize: "0.9rem", cursor: "pointer",
           }}>
           Try again
         </button>
         {error?.digest && (
-          <p style={{ color: "#475569", fontSize: "0.7rem", marginTop: 16 }}>Ref: {error.digest}</p>
+          <p style={{ color: "#9c8c74", fontSize: "0.7rem", marginTop: 16 }}>Ref: {error.digest}</p>
         )}
       </div>
     </div>

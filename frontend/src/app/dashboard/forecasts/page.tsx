@@ -21,9 +21,9 @@ interface Forecast {
 }
 
 const TREND = {
-  rising: { color: "#ef4444", label: "Rising", icon: TrendingUp },
-  falling: { color: "#10b981", label: "Falling", icon: TrendingDown },
-  stable: { color: "#818cf8", label: "Stable", icon: Minus },
+  rising: { color: "#b23a2e", label: "Rising", icon: TrendingUp },
+  falling: { color: "#2f8f52", label: "Falling", icon: TrendingDown },
+  stable: { color: "#9c6b1f", label: "Stable", icon: Minus },
 } as const;
 
 const ChartTooltip = ({ active, payload, label }: any) => {
@@ -31,9 +31,9 @@ const ChartTooltip = ({ active, payload, label }: any) => {
   const p = payload.find((x: any) => x.value != null);
   if (!p) return null;
   return (
-    <div style={{ background: "#1a2235", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "8px 14px" }}>
-      <p style={{ color: "#94a3b8", fontSize: "0.72rem" }}>{label}</p>
-      <p style={{ color: "#f1f5f9", fontWeight: 700 }}>
+    <div style={{ background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)", borderRadius: 10, padding: "8px 14px", boxShadow: "0 4px 16px -4px rgba(120,90,50,0.18)" }}>
+      <p style={{ color: "#6b5d49", fontSize: "0.72rem" }}>{label}</p>
+      <p style={{ color: "#241c15", fontWeight: 700 }}>
         {p.dataKey === "projected" ? "Projected " : ""}₹{Number(p.value).toLocaleString("en-IN")}
       </p>
     </div>
@@ -63,27 +63,27 @@ export default function ForecastsPage() {
   const TrendIcon = trend.icon;
 
   const tiles = data ? [
-    { label: "Avg monthly burn", value: data.avg_monthly, prefix: "₹", icon: Flame, color: "#f59e0b" },
-    { label: "This month (run-rate)", value: data.current_month_run_rate, prefix: "₹", icon: CalendarClock, color: "#22d3ee" },
-    { label: "Next month (projected)", value: data.next_month_projection, prefix: "₹", icon: LineIcon, color: "#6366f1" },
+    { label: "Avg monthly burn", value: data.avg_monthly, prefix: "₹", icon: Flame, color: "#b9791c" },
+    { label: "This month (run-rate)", value: data.current_month_run_rate, prefix: "₹", icon: CalendarClock, color: "#a8541f" },
+    { label: "Next month (projected)", value: data.next_month_projection, prefix: "₹", icon: LineIcon, color: "#b8862e" },
   ] : [];
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 10 }}>
-          <TrendingUp size={24} color="#818cf8" /> Forecasts
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
+          <TrendingUp size={24} color="#9c6b1f" /> Forecasts
         </h1>
-        <p style={{ color: "#64748b", marginTop: 4 }}>
+        <p style={{ color: "#8a7a64", marginTop: 4 }}>
           Projected spend from your history (linear trend over complete months).
-          {offline && <span style={{ color: "#f59e0b" }}> · backend offline</span>}
+          {offline && <span style={{ color: "#b9791c" }}> · backend offline</span>}
         </p>
       </Reveal>
 
       {loading ? (
-        <div style={{ color: "#64748b", padding: 40, textAlign: "center" }}>Computing forecast…</div>
+        <div style={{ color: "#8a7a64", padding: 40, textAlign: "center" }}>Computing forecast…</div>
       ) : !data || data.history.length === 0 ? (
-        <div className="glass-card" style={{ padding: 48, textAlign: "center", color: "#64748b" }}>
+        <div className="glass-card" style={{ padding: 48, textAlign: "center", color: "#8a7a64" }}>
           Not enough expense history yet to forecast. Upload receipts or seed data first.
         </div>
       ) : (
@@ -99,10 +99,10 @@ export default function ForecastsPage() {
                       <Icon size={18} color={t.color} />
                     </div>
                     <div>
-                      <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#f1f5f9" }}>
+                      <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#241c15" }}>
                         <AnimatedNumber value={t.value} prefix={t.prefix} />
                       </div>
-                      <div style={{ fontSize: "0.75rem", color: "#64748b" }}>{t.label}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#8a7a64" }}>{t.label}</div>
                     </div>
                   </div>
                 </StaggerItem>
@@ -115,7 +115,7 @@ export default function ForecastsPage() {
                 </div>
                 <div>
                   <div style={{ fontSize: "1.3rem", fontWeight: 700, color: trend.color }}>{trend.label}</div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b" }}>Spend trend</div>
+                  <div style={{ fontSize: "0.75rem", color: "#8a7a64" }}>Spend trend</div>
                 </div>
               </div>
             </StaggerItem>
@@ -124,24 +124,24 @@ export default function ForecastsPage() {
           {/* Chart */}
           <Reveal className="glass-card" style={{ padding: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#f1f5f9" }}>Monthly spend & projection</h2>
+              <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#241c15" }}>Monthly spend & projection</h2>
               <div style={{ display: "flex", gap: 16, fontSize: "0.75rem" }}>
-                <Legend color="#6366f1" label="Actual" />
-                <Legend color="#22d3ee" label="Projected" dashed />
+                <Legend color="#b8862e" label="Actual" />
+                <Legend color="#a8541f" label="Projected" dashed />
               </div>
             </div>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={chart} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false}
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(36,28,21,0.07)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: "#8a7a64", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#8a7a64", fontSize: 11 }} axisLine={false} tickLine={false}
                   tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} width={48} />
                 <Tooltip content={<ChartTooltip />} />
                 {data.history.length > 0 && (
-                  <ReferenceLine x={monthLabel(data.history[data.history.length - 1].month)} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
+                  <ReferenceLine x={monthLabel(data.history[data.history.length - 1].month)} stroke="rgba(36,28,21,0.16)" strokeDasharray="4 4" />
                 )}
-                <Line type="monotone" dataKey="actual" stroke="#6366f1" strokeWidth={2.5} dot={{ r: 3, fill: "#6366f1" }} connectNulls={false} />
-                <Line type="monotone" dataKey="projected" stroke="#22d3ee" strokeWidth={2.5} strokeDasharray="6 5" dot={{ r: 3, fill: "#22d3ee" }} connectNulls />
+                <Line type="monotone" dataKey="actual" stroke="#b8862e" strokeWidth={2.5} dot={{ r: 3, fill: "#b8862e" }} connectNulls={false} />
+                <Line type="monotone" dataKey="projected" stroke="#a8541f" strokeWidth={2.5} strokeDasharray="6 5" dot={{ r: 3, fill: "#a8541f" }} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </Reveal>
@@ -153,7 +153,7 @@ export default function ForecastsPage() {
 
 function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#94a3b8" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#6b5d49" }}>
       <span style={{ width: 16, height: 0, borderTop: `2px ${dashed ? "dashed" : "solid"} ${color}` }} />
       {label}
     </span>

@@ -122,10 +122,10 @@ export default function ApiKeysPage() {
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 10 }}>
-            <KeyRound size={24} color="#818cf8" /> API Keys & Export
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
+            <KeyRound size={24} color="#9c6b1f" /> API Keys & Export
           </h1>
-          <p style={{ color: "#64748b", marginTop: 4 }}>Programmatic access for connecting an ERP or accounting tool.</p>
+          <p style={{ color: "#8a7a64", marginTop: 4 }}>Programmatic access for connecting an ERP or accounting tool.</p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <button className="btn-ghost" onClick={downloadCsv} disabled={busy !== null}
@@ -147,9 +147,9 @@ export default function ApiKeysPage() {
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             style={{
               marginBottom: 16, padding: "10px 14px", borderRadius: 10, fontSize: "0.85rem",
-              color: notice.kind === "ok" ? "#10b981" : "#f87171",
-              background: notice.kind === "ok" ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
-              border: `1px solid ${notice.kind === "ok" ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`,
+              color: notice.kind === "ok" ? "#2f8f52" : "#b23a2e",
+              background: notice.kind === "ok" ? "rgba(47,143,82,0.08)" : "rgba(178,58,46,0.08)",
+              border: `1px solid ${notice.kind === "ok" ? "rgba(47,143,82,0.24)" : "rgba(178,58,46,0.24)"}`,
             }}>
             {notice.text}
           </motion.div>
@@ -165,8 +165,8 @@ export default function ApiKeysPage() {
               placeholder="Key name, e.g. Zoho Books sync"
               autoFocus
               style={{
-                flex: 1, background: "rgba(26,34,53,0.6)", border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 8, padding: "8px 12px", color: "#f1f5f9", fontSize: "0.85rem", outline: "none",
+                flex: 1, background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)",
+                borderRadius: 8, padding: "8px 12px", color: "#241c15", fontSize: "0.85rem", outline: "none",
               }}
             />
             <button className="btn-primary" disabled={busy !== null || !newName.trim()} onClick={createKey}>Create</button>
@@ -179,19 +179,19 @@ export default function ApiKeysPage() {
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             style={{
               marginBottom: 16, padding: "12px 14px", borderRadius: 10,
-              background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)",
+              background: "rgba(185,121,28,0.08)", border: "1px solid rgba(185,121,28,0.28)",
             }}>
-            <div style={{ fontSize: "0.78rem", color: "#fbbf24", marginBottom: 8, fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "#b9791c", marginBottom: 8, fontWeight: 600 }}>
               Copy this now — it won't be shown again:
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <code style={{ flex: 1, minWidth: 200, fontSize: "0.78rem", color: "#fde68a", background: "rgba(0,0,0,0.25)", padding: "6px 10px", borderRadius: 6, overflowX: "auto" }}>
+              <code className="mono" style={{ flex: 1, minWidth: 200, fontSize: "0.78rem", color: "#8a5a10", background: "rgba(185,121,28,0.08)", padding: "6px 10px", borderRadius: 6, overflowX: "auto" }}>
                 {revealedKey}
               </code>
               <button className="btn-ghost" onClick={copyKey} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78rem", padding: "6px 10px" }}>
-                {copied ? <Check size={13} color="#10b981" /> : <Copy size={13} />} {copied ? "Copied" : "Copy"}
+                {copied ? <Check size={13} color="#2f8f52" /> : <Copy size={13} />} {copied ? "Copied" : "Copy"}
               </button>
-              <button onClick={() => setRevealedKey(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}>
+              <button onClick={() => setRevealedKey(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8a7a64" }}>
                 <X size={15} />
               </button>
             </div>
@@ -200,9 +200,9 @@ export default function ApiKeysPage() {
       </AnimatePresence>
 
       {loading ? (
-        <div style={{ color: "#64748b", padding: 40, textAlign: "center" }}>Loading keys…</div>
+        <div style={{ color: "#8a7a64", padding: 40, textAlign: "center" }}>Loading keys…</div>
       ) : keys.length === 0 ? (
-        <div className="glass-card" style={{ padding: 40, textAlign: "center", color: "#64748b" }}>
+        <div className="glass-card" style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>
           No API keys yet. {isOwner && "Create one to connect an external tool."}
         </div>
       ) : (
@@ -211,12 +211,12 @@ export default function ApiKeysPage() {
             <StaggerItem key={k.id}>
               <div className="glass-card" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, opacity: k.revoked_at ? 0.5 : 1 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#f1f5f9" }}>{k.name}</div>
-                  <div className="mono" style={{ fontSize: "0.76rem", color: "#64748b" }}>
-                    {k.key_prefix}… {k.revoked_at && <span style={{ color: "#f87171", fontFamily: "var(--font-inter)" }}>· revoked</span>}
+                  <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#241c15" }}>{k.name}</div>
+                  <div className="mono" style={{ fontSize: "0.76rem", color: "#8a7a64" }}>
+                    {k.key_prefix}… {k.revoked_at && <span style={{ color: "#b23a2e", fontFamily: "var(--font-inter)" }}>· revoked</span>}
                   </div>
                 </div>
-                <div style={{ fontSize: "0.74rem", color: "#64748b", textAlign: "right" }}>
+                <div style={{ fontSize: "0.74rem", color: "#8a7a64", textAlign: "right" }}>
                   {k.last_used_at ? `Last used ${new Date(k.last_used_at).toLocaleDateString("en-IN")}` : "Never used"}
                 </div>
                 {isOwner && !k.revoked_at && (
@@ -225,8 +225,8 @@ export default function ApiKeysPage() {
                     onClick={() => revokeKey(k.id)}
                     title="Revoke this key"
                     style={{
-                      background: "none", border: "1px solid rgba(248,113,113,0.25)", borderRadius: 8,
-                      padding: "6px 8px", cursor: "pointer", color: "#f87171", opacity: busy === k.id ? 0.6 : 1,
+                      background: "none", border: "1px solid rgba(178,58,46,0.25)", borderRadius: 8,
+                      padding: "6px 8px", cursor: "pointer", color: "#b23a2e", opacity: busy === k.id ? 0.6 : 1,
                     }}>
                     <Ban size={13} />
                   </button>

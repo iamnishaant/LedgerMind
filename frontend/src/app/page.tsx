@@ -1,9 +1,12 @@
 "use client";
 /**
- * AI FinanceOS — animated landing page (the "vibe coded" marketing site).
- * Built with Framer Motion (motion/react). Dark glass aesthetic matching the app.
+ * LedgerMind — animated landing page (the "vibe coded" marketing site).
+ * Warm-editorial aesthetic: ivory/cream base, gold-to-terracotta accent,
+ * Fraunces serif for headlines/pull-quotes — inspired by editorial-luxury
+ * hospitality branding, translated for a trust-first fintech product.
  */
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import {
   ScanLine, Calculator, ReceiptText, ShieldCheck, TrendingUp, Wallet,
   Building2, Repeat, BellRing, BrainCircuit, FileSearch, Sparkles,
@@ -15,9 +18,10 @@ import {
 import ParticleNetwork from "@/components/ui/particle-network";
 
 const C = {
-  bg: "#0a0f1e", text: "#f1f5f9", muted: "#64748b", muted2: "#94a3b8",
-  primary: "#6366f1", glow: "#818cf8", accent: "#22d3ee",
-  success: "#10b981", warning: "#f59e0b", pink: "#ec4899", violet: "#8b5cf6",
+  bg: "#f8f2e7", text: "#241c15", muted: "#9c8c74", muted2: "#6b5d49",
+  primary: "#b8862e", glow: "#c9962e", accent: "#4f7268",
+  success: "#2f8f52", warning: "#b9791c", pink: "#8a4a6b", violet: "#6b4a8a",
+  danger: "#b23a2e", terracotta: "#a8541f",
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -28,6 +32,7 @@ export default function Landing() {
       <Hero />
       <Marquee />
       <Stats />
+      <Philosophy />
       <Problem />
       <HowItWorks />
       <Agents />
@@ -54,8 +59,8 @@ function Nav() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={logoBox}>🤖</div>
-        <span style={{ fontWeight: 700, fontSize: "1.02rem" }}>AI FinanceOS</span>
+        <Logo size={32} />
+        <span style={{ fontWeight: 700, fontSize: "1.02rem" }}>LedgerMind</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 26 }} className="nav-links">
         {[["Product", "#how"], ["Agents", "#agents"], ["Roadmap", "#roadmap"], ["Pricing", "#pricing"]].map(([l, h]) => (
@@ -79,9 +84,9 @@ function Hero() {
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <ParticleNetwork
           className="absolute inset-0"
-          particleColor="rgba(99, 102, 241, 0.85)"
-          lineColor="rgba(129, 140, 248, 0.4)"
-          lineColorNearMouse="rgba(34, 211, 238, 0.9)"
+          particleColor="rgba(184, 134, 46, 0.7)"
+          lineColor="rgba(168, 84, 31, 0.28)"
+          lineColorNearMouse="rgba(79, 114, 104, 0.7)"
         />
       </div>
 
@@ -96,13 +101,14 @@ function Hero() {
         <motion.h1
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          className="serif"
           style={{
-            fontSize: "clamp(2.4rem, 6vw, 4.2rem)", fontWeight: 800, lineHeight: 1.05,
-            letterSpacing: "-0.02em", margin: "22px auto 0", maxWidth: 900,
+            fontSize: "clamp(2.4rem, 6vw, 4.2rem)", fontWeight: 500, lineHeight: 1.08,
+            letterSpacing: "-0.01em", margin: "22px auto 0", maxWidth: 900,
           }}
         >
           Your virtual{" "}
-          <span className="gradient-text">accountant, bookkeeper</span>
+          <span className="gradient-text serif-italic">accountant, bookkeeper</span>
           <br /> & CFO — in one platform.
         </motion.h1>
 
@@ -148,7 +154,7 @@ function HeroPreview() {
       <div className="ring-card" style={{ maxWidth: 880, margin: "0 auto", padding: 22, textAlign: "left" }}>
         {/* window chrome */}
         <div style={{ display: "flex", gap: 7, marginBottom: 18 }}>
-          {["#ef4444", "#f59e0b", "#10b981"].map((c) => (
+          {[C.danger, C.warning, C.success].map((c) => (
             <span key={c} style={{ width: 11, height: 11, borderRadius: "50%", background: c, opacity: 0.8 }} />
           ))}
         </div>
@@ -194,7 +200,7 @@ function Marquee() {
   ];
   const doubled = [...items, ...items];
   return (
-    <div className="marquee-mask" style={{ padding: "26px 0", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+    <div className="marquee-mask" style={{ padding: "26px 0", borderTop: "1px solid rgba(36,28,21,0.06)", borderBottom: "1px solid rgba(36,28,21,0.06)" }}>
       <div className="marquee-track" style={{ gap: 40 }}>
         {doubled.map((t, i) => (
           <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 10, color: C.muted2, fontSize: "0.9rem", fontWeight: 500, whiteSpace: "nowrap" }}>
@@ -232,6 +238,25 @@ function Stats() {
   );
 }
 
+// ── Philosophy (pull-quote) ─────────────────────────────────────
+function Philosophy() {
+  return (
+    <section className="section" style={{ paddingTop: 32, paddingBottom: 32 }}>
+      <Reveal className="container" style={{ textAlign: "center", maxWidth: 760, margin: "0 auto" }}>
+        <div style={{ width: 44, height: 1, background: C.primary, opacity: 0.4, margin: "0 auto 28px" }} />
+        <p className="serif-italic" style={{
+          fontSize: "clamp(1.35rem, 2.6vw, 1.85rem)", lineHeight: 1.5, color: C.text,
+        }}>
+          "Every number should be computed, never guessed. We built LedgerMind
+          on one rule: the ledger is deterministic, the mind is intelligent —
+          and neither pretends to be the other."
+        </p>
+        <div style={{ width: 44, height: 1, background: C.primary, opacity: 0.4, margin: "28px auto 0" }} />
+      </Reveal>
+    </section>
+  );
+}
+
 // ── Problem ───────────────────────────────────────────────────
 function Problem() {
   const pains = [
@@ -246,8 +271,9 @@ function Problem() {
     <section className="section">
       <div className="container two-col">
         <Reveal>
-          <span className="eyebrow">The problem</span>
-          <h2 style={h2Style}>Running the numbers by hand is quietly costing you.</h2>
+          <div className="section-number">01</div>
+          <span className="eyebrow" style={{ marginTop: 10 }}>The problem</span>
+          <h2 style={{ ...h2Style, marginTop: 16 }}>Running the numbers by hand is quietly costing you.</h2>
           <p style={{ color: C.muted2, lineHeight: 1.65, marginTop: 16 }}>
             Millions of small businesses still run on paper receipts, spreadsheets, WhatsApp
             images and manual bookkeeping. Owners lose hours every month to organizing instead
@@ -257,8 +283,8 @@ function Problem() {
         <Stagger style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {pains.map((p) => (
             <StaggerItem key={p}>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 16px", borderRadius: 12, background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)" }}>
-                <span style={{ color: "#ef4444", fontSize: "1.1rem", lineHeight: 1.3 }}>✕</span>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 16px", borderRadius: 12, background: "rgba(178,58,46,0.05)", border: "1px solid rgba(178,58,46,0.16)" }}>
+                <span style={{ color: C.danger, fontSize: "1.1rem", lineHeight: 1.3 }}>✕</span>
                 <span style={{ color: C.text, fontSize: "0.92rem" }}>{p}</span>
               </div>
             </StaggerItem>
@@ -277,10 +303,11 @@ function HowItWorks() {
     { icon: ShieldCheck, color: C.success, title: "3 · You stay in control", body: "Low-confidence extractions pause for a one-tap human review, then resume automatically. Every step is logged to an audit trail." },
   ];
   return (
-    <section id="how" className="section" style={{ background: "linear-gradient(180deg, transparent, rgba(99,102,241,0.03), transparent)" }}>
+    <section id="how" className="section" style={{ background: "linear-gradient(180deg, transparent, rgba(184,134,46,0.05), transparent)" }}>
       <div className="container">
         <Reveal style={{ textAlign: "center", marginBottom: 48 }}>
-          <span className="eyebrow"><Zap size={14} /> How it works</span>
+          <div className="section-number">02</div>
+          <span className="eyebrow" style={{ marginTop: 10 }}><Zap size={14} /> How it works</span>
           <h2 style={{ ...h2Style, margin: "16px auto 0", maxWidth: 640 }}>From shoebox to insight in three steps</h2>
         </Reveal>
         <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 }}>
@@ -324,7 +351,8 @@ function Agents() {
     <section id="agents" className="section">
       <div className="container">
         <Reveal style={{ textAlign: "center", marginBottom: 44 }}>
-          <span className="eyebrow"><BrainCircuit size={14} /> The agent roster</span>
+          <div className="section-number">03</div>
+          <span className="eyebrow" style={{ marginTop: 10 }}><BrainCircuit size={14} /> The agent roster</span>
           <h2 style={{ ...h2Style, margin: "16px auto 0", maxWidth: 640 }}>Not one model. A whole finance team.</h2>
           <p style={{ color: C.muted2, maxWidth: 560, margin: "14px auto 0", lineHeight: 1.6 }}>
             Each agent owns one job and hands off to the next through a shared, checkpointed graph.
@@ -368,10 +396,11 @@ function Roadmap() {
     { n: "10", name: "Enterprise", status: "planned" },
   ];
   return (
-    <section id="roadmap" className="section" style={{ background: "linear-gradient(180deg, transparent, rgba(34,211,238,0.03), transparent)" }}>
+    <section id="roadmap" className="section" style={{ background: "linear-gradient(180deg, transparent, rgba(79,114,104,0.05), transparent)" }}>
       <div className="container">
         <Reveal style={{ textAlign: "center", marginBottom: 44 }}>
-          <span className="eyebrow"><GitBranch size={14} /> Product roadmap</span>
+          <div className="section-number">04</div>
+          <span className="eyebrow" style={{ marginTop: 10 }}><GitBranch size={14} /> Product roadmap</span>
           <h2 style={{ ...h2Style, margin: "16px auto 0", maxWidth: 640 }}>Ten phases, from MVP to enterprise</h2>
         </Reveal>
         <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 14 }} amount={0.08}>
@@ -384,7 +413,7 @@ function Roadmap() {
                     width: 38, height: 38, borderRadius: 10, flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontWeight: 700, fontSize: "0.95rem",
-                    background: building ? "linear-gradient(135deg, #6366f1, #22d3ee)" : "rgba(255,255,255,0.05)",
+                    background: building ? "linear-gradient(135deg, #c9962e, #a8541f)" : "rgba(36,28,21,0.06)",
                     color: building ? "#fff" : C.muted,
                   }}>{p.n}</div>
                   <div style={{ flex: 1 }}>
@@ -414,7 +443,8 @@ function Pricing() {
     <section id="pricing" className="section">
       <div className="container">
         <Reveal style={{ textAlign: "center", marginBottom: 44 }}>
-          <span className="eyebrow"><Wallet size={14} /> Pricing</span>
+          <div className="section-number">05</div>
+          <span className="eyebrow" style={{ marginTop: 10 }}><Wallet size={14} /> Pricing</span>
           <h2 style={{ ...h2Style, margin: "16px auto 0", maxWidth: 620 }}>Start free. Upgrade when the agents pay for themselves.</h2>
         </Reveal>
         <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20, alignItems: "stretch" }}>
@@ -422,12 +452,12 @@ function Pricing() {
             <StaggerItem key={t.name}>
               <div className="ring-card" style={{
                 padding: 28, height: "100%", display: "flex", flexDirection: "column",
-                border: t.highlight ? "1px solid rgba(99,102,241,0.55)" : undefined,
-                boxShadow: t.highlight ? "0 12px 48px -14px rgba(99,102,241,0.5)" : undefined,
+                border: t.highlight ? "1px solid rgba(184,134,46,0.5)" : undefined,
+                boxShadow: t.highlight ? "0 12px 48px -14px rgba(184,134,46,0.45)" : undefined,
                 position: "relative",
               }}>
                 {t.highlight && (
-                  <span style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", padding: "4px 12px", borderRadius: 999, background: "linear-gradient(135deg, #6366f1, #22d3ee)", color: "#fff" }}>
+                  <span style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", padding: "4px 12px", borderRadius: 999, background: "linear-gradient(135deg, #c9962e, #a8541f)", color: "#fff" }}>
                     Most popular
                   </span>
                 )}
@@ -463,7 +493,7 @@ function FinalCTA() {
     <section className="section">
       <Reveal className="container">
         <div className="ring-card" style={{ padding: "56px 32px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-          <div className="orb" style={{ width: 400, height: 400, top: -180, left: "50%", marginLeft: -200, background: "radial-gradient(circle, #6366f1, transparent 70%)", opacity: 0.35 }} />
+          <div className="orb" style={{ width: 400, height: 400, top: -180, left: "50%", marginLeft: -200, background: "radial-gradient(circle, #b8862e, transparent 70%)", opacity: 0.28 }} />
           <div style={{ position: "relative", zIndex: 1 }}>
             <h2 style={{ ...h2Style, maxWidth: 620, margin: "0 auto" }}>Let the agents run your books.</h2>
             <p style={{ color: C.muted2, maxWidth: 500, margin: "16px auto 0", lineHeight: 1.6 }}>
@@ -484,11 +514,11 @@ function FinalCTA() {
 // ── Footer ────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "34px 24px" }}>
+    <footer style={{ borderTop: "1px solid rgba(36,28,21,0.08)", padding: "34px 24px" }}>
       <div className="container" style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={logoBox}>🤖</div>
-          <span style={{ fontWeight: 700 }}>AI FinanceOS</span>
+          <Logo size={30} />
+          <span style={{ fontWeight: 700 }}>LedgerMind</span>
         </div>
         <div style={{ color: C.muted, fontSize: "0.82rem" }}>
           An agentic financial operating system for small businesses.
@@ -506,11 +536,8 @@ function Footer() {
 }
 
 // ── shared style tokens ───────────────────────────────────────
-const logoBox: React.CSSProperties = {
-  width: 34, height: 34, borderRadius: 9,
-  background: "linear-gradient(135deg, #6366f1, #22d3ee)",
-  display: "flex", alignItems: "center", justifyContent: "center",
-  fontSize: 17, boxShadow: "0 0 18px rgba(99,102,241,0.4)",
+const navLink: React.CSSProperties = { color: "#6b5d49", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500 };
+const h2Style: React.CSSProperties = {
+  fontFamily: "var(--font-serif)", fontSize: "clamp(1.6rem, 3.4vw, 2.4rem)",
+  fontWeight: 500, letterSpacing: "-0.01em", lineHeight: 1.2,
 };
-const navLink: React.CSSProperties = { color: "#94a3b8", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500 };
-const h2Style: React.CSSProperties = { fontSize: "clamp(1.6rem, 3.4vw, 2.4rem)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15 };

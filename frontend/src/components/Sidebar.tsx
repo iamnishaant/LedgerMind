@@ -6,6 +6,7 @@ import {
   Target, TrendingUp, BrainCircuit, Zap, History, Users, ShieldAlert, KeyRound, Settings, LogOut
 } from "lucide-react";
 import { useBusiness } from "@/lib/business-context";
+import Logo from "@/components/Logo";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard",  href: "/dashboard" },
@@ -38,25 +39,18 @@ export default function Sidebar() {
   return (
     <aside style={{
       width: "240px", minHeight: "100vh",
-      background: "rgba(9, 13, 22, 0.96)",
-      backdropFilter: "blur(12px)",
-      borderRight: "1px solid rgba(255,255,255,0.06)",
+      background: "#fffbf3",
+      borderRight: "1px solid rgba(36,28,21,0.08)",
       display: "flex", flexDirection: "column",
       padding: "22px 12px", gap: "2px", flexShrink: 0,
     }}>
       {/* Logo */}
       <div style={{ padding: "0 12px 28px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: "10px",
-            background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "18px",
-            boxShadow: "0 4px 14px -4px rgba(79,70,229,0.6), inset 0 1px 0 rgba(255,255,255,0.15)",
-          }}>🤖</div>
+          <Logo size={34} />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f1f5f9" }}>AI FinanceOS</div>
-            <div style={{ fontSize: "0.7rem", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{businessName}</div>
+            <div className="serif" style={{ fontWeight: 500, fontSize: "1rem", color: "#241c15" }}>LedgerMind</div>
+            <div style={{ fontSize: "0.7rem", color: "#8a7a64", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{businessName}</div>
           </div>
         </div>
       </div>
@@ -70,30 +64,30 @@ export default function Sidebar() {
             <div style={{
               display: "flex", alignItems: "center", gap: "11px",
               padding: "9px 12px 9px 14px", borderRadius: "10px", cursor: isLocked ? "default" : "pointer",
-              background: isActive ? "rgba(99,102,241,0.12)" : "transparent",
-              color: isActive ? "#a5b4fc" : isLocked ? "#3a4661" : "#94a3b8",
+              background: isActive ? "rgba(184,134,46,0.12)" : "transparent",
+              color: isActive ? "#9c6b1f" : isLocked ? "#b7a892" : "#6b5d49",
               transition: "background-color 0.15s ease, color 0.15s ease",
               position: "relative",
             }}
             onMouseEnter={e => {
               if (!isActive && !isLocked) {
                 const el = e.currentTarget as HTMLDivElement;
-                el.style.background = "rgba(255,255,255,0.04)";
-                el.style.color = "#cbd5e1";
+                el.style.background = "rgba(36,28,21,0.045)";
+                el.style.color = "#3d3223";
               }
             }}
             onMouseLeave={e => {
               if (!isActive && !isLocked) {
                 const el = e.currentTarget as HTMLDivElement;
                 el.style.background = "transparent";
-                el.style.color = "#94a3b8";
+                el.style.color = "#6b5d49";
               }
             }}>
               {isActive && (
                 <div style={{
                   position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)",
                   width: 3, height: 18, borderRadius: "0 3px 3px 0",
-                  background: "#818cf8",
+                  background: "#b8862e",
                 }} />
               )}
               <Icon size={17} strokeWidth={isActive ? 2.4 : 2} />
@@ -101,7 +95,7 @@ export default function Sidebar() {
               {isLocked && (
                 <span style={{
                   marginLeft: "auto", fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px",
-                  background: "rgba(255,255,255,0.04)", borderRadius: "5px", color: "#3a4661",
+                  background: "rgba(36,28,21,0.05)", borderRadius: "5px", color: "#b7a892",
                 }}>
                   Ph.{phase}
                 </span>
@@ -117,7 +111,7 @@ export default function Sidebar() {
           <div style={{
             display: "flex", alignItems: "center", gap: "10px",
             padding: "9px 12px", borderRadius: "10px", cursor: "pointer",
-            color: "#64748b", fontSize: "0.875rem",
+            color: "#8a7a64", fontSize: "0.875rem",
           }}>
             <Settings size={17} />
             Settings
@@ -128,11 +122,11 @@ export default function Sidebar() {
           style={{
             display: "flex", alignItems: "center", gap: "10px",
             padding: "9px 12px", borderRadius: "10px", cursor: "pointer",
-            color: "#64748b", fontSize: "0.875rem", background: "none", border: "none",
+            color: "#8a7a64", fontSize: "0.875rem", background: "none", border: "none",
             width: "100%", textAlign: "left", fontFamily: "inherit",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#64748b")}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#b23a2e")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#8a7a64")}
         >
           <LogOut size={17} />
           Sign out

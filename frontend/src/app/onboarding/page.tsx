@@ -52,17 +52,17 @@ export default function OnboardingPage() {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: "#0a0f1e", padding: 24, position: "relative", overflow: "hidden",
+      background: "#f8f2e7", padding: 24, position: "relative", overflow: "hidden",
     }}>
-      <div className="orb" style={{ width: 460, height: 460, top: -160, right: "6%", background: "radial-gradient(circle, #6366f1, transparent 70%)" }} />
+      <div className="orb" style={{ width: 460, height: 460, top: -160, right: "6%", background: "radial-gradient(circle, #b8862e, transparent 70%)" }} />
 
       <Reveal style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 440 }}>
         <div className="ring-card" style={{ padding: 32 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(99,102,241,0.14)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
-            <Building2 size={22} color="#818cf8" />
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(184,134,46,0.14)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
+            <Building2 size={22} color="#9c6b1f" />
           </div>
-          <h1 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#f1f5f9", marginBottom: 4 }}>Set up your business</h1>
-          <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 24 }}>
+          <h1 className="serif" style={{ fontSize: "1.4rem", fontWeight: 500, color: "#241c15", marginBottom: 4 }}>Set up your business</h1>
+          <p style={{ color: "#8a7a64", fontSize: "0.85rem", marginBottom: 24 }}>
             One workspace for your receipts, expenses, and reports. You can add more businesses later.
           </p>
 
@@ -73,7 +73,7 @@ export default function OnboardingPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 12 }}>
               <Field label="Currency">
                 <select value={currency} onChange={(e) => setCurrency(e.target.value)} style={inputStyle}>
-                  {CURRENCIES.map((c) => <option key={c} value={c} style={{ background: "#1a2235" }}>{c}</option>)}
+                  {CURRENCIES.map((c) => <option key={c} value={c} style={{ background: "#ffffff" }}>{c}</option>)}
                 </select>
               </Field>
               <Field label="GST number (optional)">
@@ -82,7 +82,7 @@ export default function OnboardingPage() {
             </div>
 
             {error && (
-              <div style={{ fontSize: "0.8rem", color: "#f87171", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "8px 12px" }}>
+              <div style={{ fontSize: "0.8rem", color: "#b23a2e", background: "rgba(178,58,46,0.08)", border: "1px solid rgba(178,58,46,0.2)", borderRadius: 8, padding: "8px 12px" }}>
                 {error}
               </div>
             )}
@@ -104,14 +104,14 @@ export default function OnboardingPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</span>
+      <span style={{ fontSize: "0.72rem", color: "#8a7a64", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</span>
       {children}
     </label>
   );
 }
 
 const inputStyle: React.CSSProperties = {
-  background: "rgba(26,34,53,0.7)", border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: 10, padding: "10px 12px", color: "#f1f5f9", fontSize: "0.88rem",
+  background: "#ffffff", border: "1px solid rgba(36,28,21,0.10)",
+  borderRadius: 10, padding: "10px 12px", color: "#241c15", fontSize: "0.88rem",
   outline: "none", width: "100%", fontFamily: "inherit",
 };
