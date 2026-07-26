@@ -44,7 +44,9 @@ inngest==0.4.14
 cryptography>=42.0
 
 # Data & Validation
-pydantic==2.9.2
+# pydantic floor is set by supabase 2.31.0's `realtime` dep (needs >=2.11.7);
+# an older pin (2.9.2) makes a clean `pip install` ResolutionImpossible.
+pydantic==2.11.7
 pydantic-settings==2.5.2
 python-dotenv==1.0.1
 
