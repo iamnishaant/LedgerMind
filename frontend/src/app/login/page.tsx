@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Reveal, motion } from "@/components/motion/Primitives";
+import Logo from "@/components/Logo";
 
 type Mode = "signin" | "signup";
 
@@ -48,28 +49,24 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: "#0a0f1e", padding: 24, position: "relative", overflow: "hidden",
+      background: "#f8f2e7", padding: 24, position: "relative", overflow: "hidden",
     }}>
-      <div className="orb" style={{ width: 480, height: 480, top: -160, left: "10%", background: "radial-gradient(circle, #6366f1, transparent 70%)" }} />
-      <div className="orb" style={{ width: 420, height: 420, bottom: -160, right: "8%", background: "radial-gradient(circle, #22d3ee, transparent 70%)", animationDelay: "5s" }} />
+      <div className="orb" style={{ width: 480, height: 480, top: -160, left: "10%", background: "radial-gradient(circle, #b8862e, transparent 70%)" }} />
+      <div className="orb" style={{ width: 420, height: 420, bottom: -160, right: "8%", background: "radial-gradient(circle, #a8541f, transparent 70%)", animationDelay: "5s" }} />
 
       <Reveal style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 400 }}>
         <div className="ring-card" style={{ padding: 32 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22, justifyContent: "center" }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 9, background: "linear-gradient(135deg, #6366f1, #22d3ee)",
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
-              boxShadow: "0 0 18px rgba(99,102,241,0.4)",
-            }}>🤖</div>
-            <span style={{ fontWeight: 700, color: "#f1f5f9" }}>AI FinanceOS</span>
+            <Logo size={32} />
+            <span style={{ fontWeight: 700, color: "#241c15" }}>LedgerMind</span>
           </div>
 
           {checkEmail ? (
             <div style={{ textAlign: "center", padding: "12px 4px" }}>
-              <Mail size={30} color="#818cf8" style={{ marginBottom: 12 }} />
-              <h2 style={{ color: "#f1f5f9", fontWeight: 700, marginBottom: 8 }}>Check your email</h2>
-              <p style={{ color: "#94a3b8", fontSize: "0.88rem", lineHeight: 1.6 }}>
-                We sent a confirmation link to <b style={{ color: "#e2e8f0" }}>{email}</b>. Confirm your
+              <Mail size={30} color="#9c6b1f" style={{ marginBottom: 12 }} />
+              <h2 style={{ color: "#241c15", fontWeight: 700, marginBottom: 8 }}>Check your email</h2>
+              <p style={{ color: "#6b5d49", fontSize: "0.88rem", lineHeight: 1.6 }}>
+                We sent a confirmation link to <b style={{ color: "#241c15" }}>{email}</b>. Confirm your
                 address, then sign in.
               </p>
               <button className="btn-ghost" style={{ marginTop: 18 }} onClick={() => { setCheckEmail(false); setMode("signin"); }}>
@@ -78,10 +75,10 @@ export default function LoginPage() {
             </div>
           ) : (
             <>
-              <h1 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#f1f5f9", textAlign: "center", marginBottom: 4 }}>
+              <h1 className="serif" style={{ fontSize: "1.4rem", fontWeight: 500, color: "#241c15", textAlign: "center", marginBottom: 4 }}>
                 {mode === "signin" ? "Welcome back" : "Create your account"}
               </h1>
-              <p style={{ color: "#64748b", fontSize: "0.85rem", textAlign: "center", marginBottom: 24 }}>
+              <p style={{ color: "#8a7a64", fontSize: "0.85rem", textAlign: "center", marginBottom: 24 }}>
                 {mode === "signin" ? "Sign in to your finance dashboard" : "Start automating your bookkeeping"}
               </p>
 
@@ -94,7 +91,7 @@ export default function LoginPage() {
 
                 {error && (
                   <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ fontSize: "0.8rem", color: "#f87171", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "8px 12px" }}>
+                    style={{ fontSize: "0.8rem", color: "#b23a2e", background: "rgba(178,58,46,0.08)", border: "1px solid rgba(178,58,46,0.2)", borderRadius: 8, padding: "8px 12px" }}>
                     {error}
                   </motion.div>
                 )}
@@ -107,11 +104,11 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <div style={{ textAlign: "center", marginTop: 18, fontSize: "0.83rem", color: "#64748b" }}>
+              <div style={{ textAlign: "center", marginTop: 18, fontSize: "0.83rem", color: "#8a7a64" }}>
                 {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
                 <button
                   onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); }}
-                  style={{ background: "none", border: "none", color: "#818cf8", cursor: "pointer", fontWeight: 600, fontSize: "0.83rem" }}
+                  style={{ background: "none", border: "none", color: "#9c6b1f", cursor: "pointer", fontWeight: 600, fontSize: "0.83rem" }}
                 >
                   {mode === "signin" ? "Create an account" : "Sign in"}
                 </button>
@@ -120,7 +117,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 18, fontSize: "0.78rem", color: "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <div style={{ textAlign: "center", marginTop: 18, fontSize: "0.78rem", color: "#9c8c74", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
           <Sparkles size={12} /> Agentic finance for small business
         </div>
       </Reveal>
@@ -139,14 +136,14 @@ function InputField({
   return (
     <div style={{ position: "relative" }}>
       <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
-        <Icon size={15} color="#64748b" />
+        <Icon size={15} color="#9c8c74" />
       </span>
       <input
         type={type} placeholder={placeholder} value={value} required={required} minLength={minLength}
         onChange={(e) => onChange(e.target.value)}
         style={{
-          width: "100%", background: "rgba(26,34,53,0.7)", border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: 10, padding: "11px 14px 11px 36px", color: "#f1f5f9", fontSize: "0.9rem",
+          width: "100%", background: "#ffffff", border: "1px solid rgba(36,28,21,0.10)",
+          borderRadius: 10, padding: "11px 14px 11px 36px", color: "#241c15", fontSize: "0.9rem",
           outline: "none", fontFamily: "inherit",
         }}
       />

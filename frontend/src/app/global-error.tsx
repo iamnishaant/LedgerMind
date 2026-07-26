@@ -14,31 +14,31 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: "system-ui, -apple-system, sans-serif", background: "#0b0f1a" }}>
+      <body style={{ margin: 0, fontFamily: "system-ui, -apple-system, sans-serif", background: "#f8f2e7" }}>
         <div style={{
           minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
         }}>
           <div style={{
             maxWidth: 440, width: "100%", padding: 32, textAlign: "center",
-            background: "rgba(26,34,53,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16,
+            background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)", borderRadius: 16,
           }}>
-            <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#f1f5f9", margin: "0 0 8px" }}>
+            <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#241c15", margin: "0 0 8px" }}>
               The app hit a fatal error
             </h1>
-            <p style={{ color: "#94a3b8", fontSize: "0.9rem", margin: "0 0 22px", lineHeight: 1.5 }}>
+            <p style={{ color: "#6b5d49", fontSize: "0.9rem", margin: "0 0 22px", lineHeight: 1.5 }}>
               Please reload the page. If it keeps happening, contact support.
             </p>
             <button
               onClick={reset}
               style={{
-                padding: "10px 22px", borderRadius: 10, border: "1px solid rgba(99,102,241,0.5)",
-                background: "rgba(99,102,241,0.16)", color: "#818cf8", fontWeight: 600,
+                padding: "10px 22px", borderRadius: 10, border: "1px solid rgba(184,134,46,0.5)",
+                background: "rgba(184,134,46,0.14)", color: "#9c6b1f", fontWeight: 600,
                 fontSize: "0.9rem", cursor: "pointer",
               }}>
               Reload
             </button>
             {error?.digest && (
-              <p style={{ color: "#475569", fontSize: "0.7rem", marginTop: 16 }}>Ref: {error.digest}</p>
+              <p style={{ color: "#9c8c74", fontSize: "0.7rem", marginTop: 16 }}>Ref: {error.digest}</p>
             )}
           </div>
         </div>

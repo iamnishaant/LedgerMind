@@ -96,10 +96,10 @@ export default function ApprovalsPage() {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 10 }}>
-          <ShieldAlert size={24} color="#f59e0b" /> Approvals
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
+          <ShieldAlert size={24} color="#b9791c" /> Approvals
         </h1>
-        <p style={{ color: "#64748b", marginTop: 4 }}>
+        <p style={{ color: "#8a7a64", marginTop: 4 }}>
           Expenses the Fraud agent flagged as high risk, awaiting {isOwner ? "your" : "the owner's"} sign-off.
         </p>
       </Reveal>
@@ -110,9 +110,9 @@ export default function ApprovalsPage() {
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             style={{
               marginBottom: 16, padding: "10px 14px", borderRadius: 10, fontSize: "0.85rem",
-              color: notice.kind === "ok" ? "#10b981" : "#f87171",
-              background: notice.kind === "ok" ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
-              border: `1px solid ${notice.kind === "ok" ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`,
+              color: notice.kind === "ok" ? "#2f8f52" : "#b23a2e",
+              background: notice.kind === "ok" ? "rgba(47,143,82,0.08)" : "rgba(178,58,46,0.08)",
+              border: `1px solid ${notice.kind === "ok" ? "rgba(47,143,82,0.24)" : "rgba(178,58,46,0.24)"}`,
             }}>
             {notice.text}
           </motion.div>
@@ -120,9 +120,9 @@ export default function ApprovalsPage() {
       </AnimatePresence>
 
       {loading ? (
-        <div style={{ color: "#64748b", padding: 40, textAlign: "center" }}>Loading approvals…</div>
+        <div style={{ color: "#8a7a64", padding: 40, textAlign: "center" }}>Loading approvals…</div>
       ) : pending.length === 0 ? (
-        <div className="glass-card" style={{ padding: 40, textAlign: "center", color: "#64748b" }}>
+        <div className="glass-card" style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>
           Nothing awaiting approval right now.
         </div>
       ) : (
@@ -132,13 +132,13 @@ export default function ApprovalsPage() {
               <div className="glass-card" style={{ padding: "16px 18px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
                   <div>
-                    <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#f1f5f9" }}>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#241c15" }}>
                       {e.vendor_name ?? "Unknown vendor"}
-                      <span style={{ marginLeft: 8, fontSize: "0.75rem", fontWeight: 400, color: "#64748b" }}>
+                      <span style={{ marginLeft: 8, fontSize: "0.75rem", fontWeight: 400, color: "#8a7a64" }}>
                         {e.category ?? "Uncategorized"} · {e.expense_date}
                       </span>
                     </div>
-                    <div className="tabular" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f1f5f9", marginTop: 4, letterSpacing: "-0.01em" }}>
+                    <div className="tabular" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#241c15", marginTop: 4, letterSpacing: "-0.01em" }}>
                       ₹{e.amount.toLocaleString("en-IN")}
                     </div>
                   </div>
@@ -149,7 +149,7 @@ export default function ApprovalsPage() {
                         <Check size={14} /> Approve
                       </button>
                       <button className="btn-ghost" disabled={busy !== null} onClick={() => setRejecting(e.id)}
-                        style={{ display: "flex", alignItems: "center", gap: 6, color: "#f87171" }}>
+                        style={{ display: "flex", alignItems: "center", gap: 6, color: "#b23a2e" }}>
                         <X size={14} /> Reject
                       </button>
                     </div>
@@ -159,7 +159,7 @@ export default function ApprovalsPage() {
                 {e.metadata?.fraud_reasons && e.metadata.fraud_reasons.length > 0 && (
                   <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
                     {e.metadata.fraud_reasons.map((r, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: "0.78rem", color: "#fbbf24" }}>
+                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: "0.78rem", color: "#b9791c" }}>
                         <AlertTriangle size={12} style={{ marginTop: 2, flexShrink: 0 }} /> {r}
                       </div>
                     ))}
@@ -173,12 +173,12 @@ export default function ApprovalsPage() {
                       onChange={(ev) => setReason(ev.target.value)}
                       placeholder="Reason (optional)"
                       style={{
-                        flex: 1, background: "rgba(26,34,53,0.6)", border: "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: 8, padding: "8px 12px", color: "#f1f5f9", fontSize: "0.82rem", outline: "none",
+                        flex: 1, background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)",
+                        borderRadius: 8, padding: "8px 12px", color: "#241c15", fontSize: "0.82rem", outline: "none",
                       }}
                     />
                     <button className="btn-primary" disabled={busy !== null} onClick={() => reject(e.id)}
-                      style={{ background: "#f87171", opacity: busy === e.id ? 0.6 : 1 }}>
+                      style={{ background: "#b23a2e", opacity: busy === e.id ? 0.6 : 1 }}>
                       Confirm reject
                     </button>
                     <button className="btn-ghost" onClick={() => { setRejecting(null); setReason(""); }}>Cancel</button>

@@ -47,10 +47,10 @@ const SAMPLE_SUMMARY: Summary = {
 };
 
 const STATUS_META: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  completed: { label: "completed", color: "#10b981", icon: CheckCircle2 },
-  failed: { label: "failed", color: "#f87171", icon: XCircle },
-  started: { label: "started", color: "#64748b", icon: Clock3 },
-  awaiting_human: { label: "awaiting human", color: "#f59e0b", icon: HelpCircle },
+  completed: { label: "completed", color: "#2f8f52", icon: CheckCircle2 },
+  failed: { label: "failed", color: "#b23a2e", icon: XCircle },
+  started: { label: "started", color: "#8a7a64", icon: Clock3 },
+  awaiting_human: { label: "awaiting human", color: "#b9791c", icon: HelpCircle },
 };
 
 const AGENT_LABEL: Record<string, string> = {
@@ -128,23 +128,23 @@ export default function AuditPage() {
     <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 10 }}>
-            <History size={24} color="#818cf8" /> Audit Log
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
+            <History size={24} color="#9c6b1f" /> Audit Log
           </h1>
-          <p style={{ color: "#64748b", marginTop: "4px" }}>
+          <p style={{ color: "#8a7a64", marginTop: "4px" }}>
             Every agent run across the pipeline — OCR, Accounting, Fraud, Budget Monitor.
-            {usingSample && <span style={{ color: "#f59e0b" }}> · showing sample data (backend offline)</span>}
+            {usingSample && <span style={{ color: "#b9791c" }}> · showing sample data (backend offline)</span>}
           </p>
         </div>
         <div style={{ position: "relative" }}>
-          <Search size={15} color="#64748b" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
+          <Search size={15} color="#8a7a64" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search agent or receipt…"
             style={{
-              background: "rgba(26,34,53,0.6)", border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 10, padding: "9px 14px 9px 34px", color: "#f1f5f9",
+              background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)",
+              borderRadius: 10, padding: "9px 14px 9px 34px", color: "#241c15",
               fontSize: "0.85rem", outline: "none", width: 240,
             }}
           />
@@ -154,9 +154,9 @@ export default function AuditPage() {
       {/* Summary tiles */}
       <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "22px" }}>
         {[
-          { label: "Total runs", value: summary.total_runs, suffix: "", icon: History, color: "#6366f1" },
-          { label: "Success rate", value: summary.success_rate, suffix: "%", icon: CheckCircle2, color: "#10b981" },
-          { label: "Failed runs", value: summary.failed_runs, suffix: "", icon: XCircle, color: "#f87171" },
+          { label: "Total runs", value: summary.total_runs, suffix: "", icon: History, color: "#b8862e" },
+          { label: "Success rate", value: summary.success_rate, suffix: "%", icon: CheckCircle2, color: "#2f8f52" },
+          { label: "Failed runs", value: summary.failed_runs, suffix: "", icon: XCircle, color: "#b23a2e" },
         ].map((t) => {
           const Icon = t.icon;
           return (
@@ -166,10 +166,10 @@ export default function AuditPage() {
                   <Icon size={18} color={t.color} />
                 </div>
                 <div>
-                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f1f5f9" }}>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#241c15" }}>
                     <AnimatedNumber value={t.value} suffix={t.suffix} />
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b" }}>{t.label}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#8a7a64" }}>{t.label}</div>
                 </div>
               </div>
             </StaggerItem>
@@ -188,9 +188,9 @@ export default function AuditPage() {
               style={{
                 padding: "7px 14px", borderRadius: 999, fontSize: "0.8rem", fontWeight: 600,
                 cursor: "pointer", transition: "all 0.15s ease",
-                border: `1px solid ${active ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.08)"}`,
-                background: active ? "rgba(99,102,241,0.16)" : "transparent",
-                color: active ? "#818cf8" : "#94a3b8",
+                border: `1px solid ${active ? "rgba(184,134,46,0.5)" : "rgba(36,28,21,0.09)"}`,
+                background: active ? "rgba(184,134,46,0.14)" : "transparent",
+                color: active ? "#9c6b1f" : "#6b5d49",
               }}>
               {a === "All" ? "All agents" : (AGENT_LABEL[a] ?? a)}
             </button>
@@ -208,9 +208,9 @@ export default function AuditPage() {
               style={{
                 padding: "6px 12px", borderRadius: 999, fontSize: "0.75rem", fontWeight: 600,
                 cursor: "pointer", transition: "all 0.15s ease",
-                border: `1px solid ${active ? `${meta?.color ?? "#6366f1"}55` : "rgba(255,255,255,0.06)"}`,
-                background: active ? `${meta?.color ?? "#6366f1"}18` : "transparent",
-                color: active ? (meta?.color ?? "#818cf8") : "#64748b",
+                border: `1px solid ${active ? `${meta?.color ?? "#b8862e"}55` : "rgba(36,28,21,0.07)"}`,
+                background: active ? `${meta?.color ?? "#b8862e"}18` : "transparent",
+                color: active ? (meta?.color ?? "#9c6b1f") : "#8a7a64",
               }}>
               {s === "All" ? "All statuses" : (meta?.label ?? s)}
             </button>
@@ -222,18 +222,18 @@ export default function AuditPage() {
       <div className="glass-card" style={{ padding: "8px 8px 12px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <tr style={{ borderBottom: "1px solid rgba(36,28,21,0.07)" }}>
               {["Time", "Agent", "Status", "Receipt", "Summary"].map((h) => (
-                <th key={h} style={{ textAlign: "left", padding: "12px 16px", fontSize: "0.72rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                <th key={h} style={{ textAlign: "left", padding: "12px 16px", fontSize: "0.72rem", color: "#8a7a64", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             <AnimatePresence mode="popLayout" initial={false}>
               {loading ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Loading audit log…</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>Loading audit log…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>No agent runs match this filter.</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>No agent runs match this filter.</td></tr>
               ) : (
                 filtered.map((r, i) => {
                   const meta = STATUS_META[r.status] ?? STATUS_META.started;
@@ -246,20 +246,20 @@ export default function AuditPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3, delay: Math.min(i * 0.02, 0.3) }}
-                      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-                      onMouseEnter={ev => (ev.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)"}
+                      style={{ borderBottom: "1px solid rgba(36,28,21,0.05)" }}
+                      onMouseEnter={ev => (ev.currentTarget as HTMLElement).style.background = "rgba(184,134,46,0.04)"}
                       onMouseLeave={ev => (ev.currentTarget as HTMLElement).style.background = "transparent"}>
-                      <td style={{ padding: "13px 16px", fontSize: "0.8rem", color: "#64748b", whiteSpace: "nowrap" }}>{formatTime(r.created_at)}</td>
-                      <td style={{ padding: "13px 16px", fontSize: "0.875rem", color: "#f1f5f9", fontWeight: 500 }}>{AGENT_LABEL[r.agent_name] ?? r.agent_name}</td>
+                      <td style={{ padding: "13px 16px", fontSize: "0.8rem", color: "#8a7a64", whiteSpace: "nowrap" }}>{formatTime(r.created_at)}</td>
+                      <td style={{ padding: "13px 16px", fontSize: "0.875rem", color: "#241c15", fontWeight: 500 }}>{AGENT_LABEL[r.agent_name] ?? r.agent_name}</td>
                       <td style={{ padding: "13px 16px" }}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.7rem", fontWeight: 700, color: meta.color, background: `${meta.color}18`, padding: "3px 9px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.03em" }}>
                           <StatusIcon size={11} /> {meta.label}
                         </span>
                       </td>
-                      <td style={{ padding: "13px 16px", fontSize: "0.78rem", color: "#64748b", fontFamily: "monospace" }}>
+                      <td className="mono" style={{ padding: "13px 16px", fontSize: "0.78rem", color: "#8a7a64" }}>
                         {r.receipt_id ? r.receipt_id.slice(0, 8) : "—"}
                       </td>
-                      <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#cbd5e1" }}>{summarize(r)}</td>
+                      <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#4a3d2c" }}>{summarize(r)}</td>
                     </motion.tr>
                   );
                 })
