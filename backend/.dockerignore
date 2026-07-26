@@ -1,0 +1,19 @@
+# Never bake secrets or local state into the image
+.env
+.env.*
+!.env.example
+
+# Local virtualenv — deps are reinstalled inside the image
+venv/
+.venv/
+
+# Python caches / test artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+tests/
+
+# Downloaded OCR sample data / scratch outputs
+scripts/sample_receipts/
+*.log

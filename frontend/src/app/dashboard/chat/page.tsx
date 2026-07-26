@@ -53,6 +53,10 @@ export default function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
 
+  // Append streamed text / tools to the last (assistant) message in place.
+  const patchLast = (fn: (m: Msg) => Msg) =>
+    setMessages(prev => prev.map((m, i) => (i === prev.length - 1 ? fn(m) : m)));
+
   const send = async (text: string) => {
     const q = text.trim();
     if (!q || busy) return;
@@ -60,14 +64,41 @@ export default function ChatPage() {
     setMessages(prev => [...prev, { role: "user", content: q }]);
     setBusy(true);
     try {
-      const r = await authedFetch(`/api/v1/chat`, {
+      const r = await authedFetch(`/api/v1/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ business_id: businessId, message: q }),
       });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.detail ?? "Chat failed");
-      setMessages(prev => [...prev, { role: "assistant", content: d.answer, tools_used: d.tools_used }]);
+      if (!r.ok || !r.body) throw new Error(`stream failed (${r.status})`);
+
+      // Placeholder assistant bubble we stream tokens into.
+      setMessages(prev => [...prev, { role: "assistant", content: "", tools_used: [] }]);
+
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        // SSE events are separated by a blank line.
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+        for (const block of events) {
+          const line = block.split("\n").find(l => l.startsWith("data:"));
+          if (!line) continue;
+          const ev = JSON.parse(line.slice(5).trim());
+          if (ev.type === "token") {
+            patchLast(m => ({ ...m, content: m.content + ev.text }));
+          } else if (ev.type === "tool") {
+            patchLast(m => ({ ...m, tools_used: [...(m.tools_used ?? []), ev.name] }));
+          } else if (ev.type === "done") {
+            patchLast(m => ({ ...m, content: ev.answer, tools_used: ev.tools_used }));
+          } else if (ev.type === "error") {
+            throw new Error(ev.detail ?? "stream error");
+          }
+        }
+      }
     } catch (e: any) {
       setMessages(prev => [...prev, { role: "assistant", content: `⚠️ ${e.message ?? "Couldn't reach the assistant."} (is the backend running?)` }]);
     } finally {
@@ -138,7 +169,7 @@ export default function ChatPage() {
           ))}
         </AnimatePresence>
 
-        {busy && (
+        {busy && messages[messages.length - 1]?.role !== "assistant" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", justifyContent: "flex-start" }}>
             <div style={{ padding: "14px 18px", borderRadius: 16, borderBottomLeftRadius: 4, background: "rgba(26,34,53,0.7)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: 6, alignItems: "center" }}>
               {[0, 1, 2].map(d => (

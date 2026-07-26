@@ -52,6 +52,13 @@ const CATEGORY_COLOR: Record<string, string> = {
 };
 const colorFor = (c: string | null) => CATEGORY_COLOR[c ?? ""] ?? "#64748b";
 
+// Must match EXPENSE_CATEGORIES in backend/app/agents/accounting_agent.py.
+const ALL_CATEGORIES = [
+  "Food & Dining", "Travel & Transport", "Office Supplies", "Software & Subscriptions",
+  "Utilities", "Medical & Health", "Marketing & Advertising", "Rent & Facilities",
+  "Professional Services", "Equipment", "Other",
+];
+
 export default function ExpensesPage() {
   const { businessId, authedFetch } = useBusiness();
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -59,6 +66,30 @@ export default function ExpensesPage() {
   const [usingSample, setUsingSample] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("All");
   const [query, setQuery] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [justLearnedId, setJustLearnedId] = useState<string | null>(null);
+
+  // Correct an expense's category. Optimistic update; records a learning signal
+  // server-side (PATCH /expenses/{id}) so future receipts from this vendor
+  // categorize the same way. Reverts on failure. Disabled on sample data.
+  async function saveCategory(exp: Expense, category: string) {
+    setEditingId(null);
+    if (category === exp.category || usingSample) return;
+    const prev = exp.category;
+    setExpenses(list => list.map(x => (x.id === exp.id ? { ...x, category } : x)));
+    try {
+      const res = await authedFetch(`/api/v1/expenses/${exp.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category }),
+      });
+      if (!res.ok) throw new Error("bad status");
+      setJustLearnedId(exp.id);
+      setTimeout(() => setJustLearnedId(id => (id === exp.id ? null : id)), 2600);
+    } catch {
+      setExpenses(list => list.map(x => (x.id === exp.id ? { ...x, category: prev } : x)));
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -137,10 +168,10 @@ export default function ExpensesPage() {
                   <Icon size={18} color={t.color} />
                 </div>
                 <div>
-                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f1f5f9" }}>
+                  <div className="tabular" style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f1f5f9", letterSpacing: "-0.02em" }}>
                     <AnimatedNumber value={t.value} prefix={t.prefix} />
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b" }}>{t.label}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{t.label}</div>
                 </div>
               </div>
             </StaggerItem>
@@ -190,13 +221,12 @@ export default function ExpensesPage() {
                   <motion.tr
                     key={e.id}
                     layout
+                    className="data-row"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.3) }}
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-                    onMouseEnter={ev => (ev.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)"}
-                    onMouseLeave={ev => (ev.currentTarget as HTMLElement).style.background = "transparent"}>
+                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                     <td style={{ padding: "13px 16px", fontSize: "0.875rem", color: "#f1f5f9", fontWeight: 500 }}>
                       {e.vendor_name ?? "Unknown"}
                       {e.is_duplicate && (
@@ -218,16 +248,42 @@ export default function ExpensesPage() {
                       )}
                     </td>
                     <td style={{ padding: "13px 16px", fontSize: "0.82rem" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#cbd5e1" }}>
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(e.category) }} />
-                        {e.category ?? "Uncategorized"}
-                      </span>
+                      {editingId === e.id ? (
+                        <select
+                          autoFocus
+                          defaultValue={e.category ?? "Other"}
+                          onBlur={() => setEditingId(null)}
+                          onChange={ev => saveCategory(e, ev.target.value)}
+                          style={{
+                            background: "#1a2235", border: "1px solid rgba(99,102,241,0.5)",
+                            borderRadius: 8, padding: "5px 8px", color: "#f1f5f9",
+                            fontSize: "0.8rem", outline: "none",
+                          }}>
+                          {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => !usingSample && setEditingId(e.id)}
+                          title={usingSample ? "Connect the backend to edit" : "Click to correct — the app learns from this"}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 7, color: "#cbd5e1",
+                            background: "transparent", border: "none", padding: 0,
+                            cursor: usingSample ? "default" : "pointer", fontSize: "0.82rem",
+                            borderBottom: usingSample ? "none" : "1px dashed rgba(255,255,255,0.15)",
+                          }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(e.category) }} />
+                          {e.category ?? "Uncategorized"}
+                          {justLearnedId === e.id && (
+                            <span style={{ marginLeft: 6, fontSize: "0.68rem", color: "#818cf8" }}>✨ learned</span>
+                          )}
+                        </button>
+                      )}
                     </td>
-                    <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#64748b" }}>{e.expense_date}</td>
-                    <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#10b981", textAlign: "right" }}>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.8rem", color: "#64748b" }}>{e.expense_date}</td>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#10b981", textAlign: "right" }}>
                       {e.gst_amount ? `₹${e.gst_amount.toLocaleString("en-IN")}` : "—"}
                     </td>
-                    <td style={{ padding: "13px 16px", fontSize: "0.9rem", color: "#f1f5f9", fontWeight: 600, textAlign: "right" }}>
+                    <td className="tabular" style={{ padding: "13px 16px", fontSize: "0.9rem", color: "#f1f5f9", fontWeight: 600, textAlign: "right", letterSpacing: "-0.01em" }}>
                       ₹{e.amount.toLocaleString("en-IN")}
                     </td>
                   </motion.tr>

@@ -78,6 +78,6 @@ async def test_revoke_nonexistent_key_is_404(qa_business):
     assert exc_info.value.status_code == 404
 
 
-def test_business_id_for_api_key_rejects_non_prefixed_and_unknown_keys():
+def test_business_id_for_api_key_rejects_non_prefixed_and_unknown_keys(require_supabase):
     assert business_id_for_api_key("not-a-real-key") is None
     assert business_id_for_api_key(KEY_PREFIX + "totally-made-up") is None

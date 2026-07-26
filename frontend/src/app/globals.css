@@ -20,7 +20,21 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  
+
+  /* ── Bespoke semantic accents (referenced by the component classes below
+        and available as Tailwind utilities, e.g. text-success). Solid hex so
+        they harmonize with the app's existing hand-tuned surfaces. ── */
+  --color-primary-glow: #818cf8;   /* indigo-400 — active/hover text accents  */
+  --color-cyan: #22d3ee;           /* secondary accent (charts, "needs review") */
+  --color-success: #10b981;        /* muted emerald                            */
+  --color-warning: #f59e0b;        /* soft amber                               */
+  --color-danger: #f87171;         /* soft red                                 */
+  --color-surface: #131a2b;        /* card fill (opaque)                        */
+  --color-surface-2: #1a2336;      /* raised surface / inputs                  */
+  --color-text: #f1f5f9;           /* slate-100 — primary text                 */
+  --color-text-muted: #94a3b8;     /* slate-400 — secondary text               */
+  --color-text-dim: #64748b;       /* slate-500 — tertiary / captions          */
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -47,47 +61,50 @@
     --border: 41 19% 78%;
     --input: 41 19% 78%;
     --ring: 0 0% 18%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 40 21% 85%;
-    --sidebar-foreground: 0 0% 18%;
-    --sidebar-primary: 0 0% 18%;
-    --sidebar-primary-foreground: 42 22% 88%;
-    --sidebar-accent: 53 17% 87%;
-    --sidebar-accent-foreground: 0 0% 18%;
-    --sidebar-border: 41 19% 78%;
-    --sidebar-ring: 0 0% 18%;
+    /* Plain (non-Tailwind) tokens shared by the component classes. */
+    --color-bg: #0a0f1e;
+    --color-stroke: rgba(255, 255, 255, 0.08);        /* subtle hairline        */
+    --color-stroke-strong: rgba(255, 255, 255, 0.14); /* hover / emphasis       */
+    --color-primary-strong: #4f46e5;                  /* indigo-600             */
+    --shadow-card: 0 1px 2px rgba(2, 6, 23, 0.4), 0 1px 3px rgba(2, 6, 23, 0.3);
+    --shadow-card-hover: 0 10px 30px -12px rgba(2, 6, 23, 0.7), 0 2px 8px -2px rgba(79, 70, 229, 0.28);
+    --shadow-pop: 0 16px 48px -12px rgba(2, 6, 23, 0.8);
+    --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
   }
 
   .dark {
-    --background: 0 0% 8%;
-    --foreground: 51 15% 79%;
-    --card: 0 0% 11%;
-    --card-foreground: 51 15% 79%;
-    --popover: 0 0% 11%;
-    --popover-foreground: 51 15% 79%;
-    --primary: 51 15% 79%;
-    --primary-foreground: 0 0% 8%;
-    --secondary: 0 0% 13%;
-    --secondary-foreground: 51 15% 79%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 37 5% 54%;
-    --accent: 0 0% 21%;
-    --accent-foreground: 51 15% 79%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 51 15% 79%;
-    --border: 0 0% 17%;
-    --input: 0 0% 17%;
-    --ring: 51 15% 79%;
+    /* Refined deep-slate + indigo identity (replaces the create-next-app
+       beige leftover). These feed the @theme color tokens above, so fixing
+       them here corrects colors app-wide in one place. */
+    --background: 222 47% 6%;        /* #090d16 deep charcoal slate */
+    --foreground: 210 40% 96%;
+    --card: 222 33% 12%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 33% 11%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 239 84% 67%;          /* indigo-500 #6366f1 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 25% 18%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 222 24% 16%;
+    --muted-foreground: 215 20% 65%; /* slate-400 */
+    --accent: 222 25% 18%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 84% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 25% 19%;           /* subtle slate hairline */
+    --input: 217 24% 22%;
+    --ring: 239 84% 67%;             /* indigo focus ring */
 
-    --sidebar-background: 0 0% 6%;
-    --sidebar-foreground: 51 15% 79%;
-    --sidebar-primary: 51 15% 79%;
-    --sidebar-primary-foreground: 0 0% 8%;
-    --sidebar-accent: 0 0% 21%;
-    --sidebar-accent-foreground: 51 15% 79%;
-    --sidebar-border: 0 0% 17%;
-    --sidebar-ring: 51 15% 79%;
+    /* Chart series palette — was referenced by the dashboard but never
+       defined, which rendered every bar black. Bespoke, muted-vivid set. */
+    --chart-1: #6366f1;   /* indigo  */
+    --chart-2: #22d3ee;   /* cyan    */
+    --chart-3: #10b981;   /* emerald */
+    --chart-4: #f59e0b;   /* amber   */
+    --chart-5: #ec4899;   /* pink    */
   }
 }
 
@@ -97,61 +114,84 @@
   }
   body {
     @apply text-foreground;
-    /* This app ships a SINGLE dark theme — every screen (auth, dashboard,
-       cards) hardcodes dark navy + off-white. The light palette in :root
-       above is a create-next-app leftover that was never meant to render;
-       with no `.dark` class on <html> it was silently theming the whole app
-       light and washing everything out. <html> now carries `class="dark"`
-       (supplying the correct foreground/border tokens), and we pin the base
-       background to the exact navy the auth + dashboard screens use so it can
-       never fall back to the light palette again. */
-    background-color: #0a0f1e;
+    /* Single dark theme — deep slate base so nothing falls back to the unused
+       light palette above. */
+    background-color: var(--color-bg);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Tabular figures for money, quantities, keys — align columns, no jitter. */
+  .mono, .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv01" 1;
+  }
+  .tabular-plain { font-variant-numeric: tabular-nums; }
+
+  /* Consistent, refined focus for native form controls. */
+  input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: none;
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
   }
 }
 
 /* ── Glassmorphism card ─────────────────────────────────────── */
 .glass-card {
-  background: rgba(26, 34, 53, 0.6);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--color-border);
+  background: rgba(19, 26, 43, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--color-stroke);
   border-radius: 16px;
+  box-shadow: var(--shadow-card);
 }
 
-/* Hover lift for interactive cards */
+/* Hover lift for interactive cards — refined depth, not a neon glow. */
 .lift { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
 .lift:hover {
-  transform: translateY(-4px);
-  border-color: rgba(99,102,241,0.4);
-  box-shadow: 0 12px 34px -14px rgba(99,102,241,0.4);
+  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* ── Gradient text ──────────────────────────────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-primary-glow), var(--color-accent));
+  background: linear-gradient(135deg, var(--color-primary-glow), var(--color-cyan));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ── Primary button ─────────────────────────────────────────── */
+/* ── Primary button — tactile & weighted ────────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary), #4f46e5);
-  color: white;
+  background: linear-gradient(180deg, #6366f1, #4f46e5);
+  color: #fff;
   border: none;
   border-radius: 10px;
   padding: 10px 20px;
   font-size: 0.9rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 1px 2px rgba(2, 6, 23, 0.5),
+              0 6px 16px -4px rgba(79, 70, 229, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+  filter: brightness(1.06);
+  box-shadow: 0 2px 4px rgba(2, 6, 23, 0.55),
+              0 10px 24px -6px rgba(79, 70, 229, 0.55),
+              inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
+.btn-primary:active { transform: translateY(0); filter: brightness(0.98); }
+.btn-primary:disabled { opacity: 0.55; cursor: default; transform: none; filter: none; }
 
-/* ── Status badge ───────────────────────────────────────────── */
+/* ── Status badge — translucent pills ───────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -162,17 +202,42 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  border: 1px solid transparent;
 }
-.badge-pending    { background: rgba(245,158,11,0.15); color: var(--color-warning); }
-.badge-processing { background: rgba(99,102,241,0.15); color: var(--color-primary-glow); }
-.badge-completed  { background: rgba(16,185,129,0.15); color: var(--color-success); }
-.badge-failed     { background: rgba(239,68,68,0.15);  color: var(--color-danger); }
-.badge-needs_review { background: rgba(34,211,238,0.15); color: var(--color-accent); }
+.badge-pending      { background: rgba(245, 158, 11, 0.14); color: var(--color-warning); border-color: rgba(245, 158, 11, 0.25); }
+.badge-processing   { background: rgba(99, 102, 241, 0.14); color: var(--color-primary-glow); border-color: rgba(99, 102, 241, 0.28); }
+.badge-completed    { background: rgba(16, 185, 129, 0.13); color: var(--color-success); border-color: rgba(16, 185, 129, 0.26); }
+.badge-failed       { background: rgba(239, 68, 68, 0.13);  color: var(--color-danger);  border-color: rgba(239, 68, 68, 0.26); }
+.badge-needs_review { background: rgba(34, 211, 238, 0.12); color: var(--color-cyan);    border-color: rgba(34, 211, 238, 0.26); }
+
+/* ── Text input / select ────────────────────────────────────── */
+.input {
+  width: 100%;
+  background: rgba(26, 35, 54, 0.7);
+  border: 1px solid var(--color-stroke);
+  border-radius: 10px;
+  padding: 10px 13px;
+  color: var(--color-text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input::placeholder { color: var(--color-text-dim); }
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+/* ── Data table rows (Expense feed, Approvals, Audit) ───────── */
+.data-row { transition: background-color 0.14s ease; }
+.data-row:hover { background: rgba(99, 102, 241, 0.05); }
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-surface); }
-::-webkit-scrollbar-thumb { background: var(--color-surface-2); border-radius: 3px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.18); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.32); background-clip: padding-box; }
 
 /* ── Animations ─────────────────────────────────────────────── */
 @keyframes fadeUp {
@@ -199,7 +264,7 @@
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.5;
+  opacity: 0.38;
   pointer-events: none;
   animation: float-orb 18s ease-in-out infinite;
 }
@@ -217,16 +282,18 @@
 /* Gradient-border card (glow ring on hover) */
 .ring-card {
   position: relative;
-  background: rgba(17, 24, 39, 0.55);
-  border: 1px solid var(--color-border);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--color-stroke);
   border-radius: 18px;
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-card);
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .ring-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(99,102,241,0.45);
-  box-shadow: 0 12px 40px -12px rgba(99,102,241,0.4);
+  border-color: rgba(99,102,241,0.4);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* Pill / eyebrow label */
@@ -244,19 +311,20 @@
   border: 1px solid rgba(99,102,241,0.22);
 }
 
-/* Ghost / secondary button */
+/* Ghost / secondary button — outline treatment */
 .btn-ghost {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.03);
   color: var(--color-text);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-stroke);
   border-radius: 10px;
   padding: 11px 22px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
-.btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); }
+.btn-ghost:hover { background: rgba(255,255,255,0.06); border-color: var(--color-stroke-strong); }
+.btn-ghost:active { transform: translateY(0.5px); }
 
 .btn-lg { padding: 14px 28px; font-size: 0.98rem; border-radius: 12px; }
 

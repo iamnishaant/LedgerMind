@@ -212,8 +212,8 @@ export default function ApiKeysPage() {
               <div className="glass-card" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, opacity: k.revoked_at ? 0.5 : 1 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#f1f5f9" }}>{k.name}</div>
-                  <div style={{ fontSize: "0.76rem", color: "#64748b", fontFamily: "monospace" }}>
-                    {k.key_prefix}… {k.revoked_at && <span style={{ color: "#f87171", fontFamily: "inherit" }}>· revoked</span>}
+                  <div className="mono" style={{ fontSize: "0.76rem", color: "#64748b" }}>
+                    {k.key_prefix}… {k.revoked_at && <span style={{ color: "#f87171", fontFamily: "var(--font-inter)" }}>· revoked</span>}
                   </div>
                 </div>
                 <div style={{ fontSize: "0.74rem", color: "#64748b", textAlign: "right" }}>

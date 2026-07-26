@@ -32,7 +32,8 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.replace("/login"); return; }
 
-      // RLS policy "Business owner" permits this insert (owner_id = auth.uid()).
+      // RLS policy "Create own business" permits this insert (owner_id = auth.uid());
+      // the after-insert trigger then adds this user as the owner member.
       const { error: err } = await supabase.from("businesses").insert({
         owner_id: user.id, name: name.trim(), currency,
         gst_number: gstNumber.trim() || null, country: "IN",

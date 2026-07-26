@@ -15,14 +15,16 @@ from functools import lru_cache
 from app.core.config import settings
 
 
-@lru_cache(maxsize=4)
-def get_chat_model(temperature: float = 0.0):
+@lru_cache(maxsize=8)
+def get_chat_model(temperature: float = 0.0, model: str | None = None):
     """
     Return a LangChain chat model for the configured provider.
 
     - provider="anthropic" → ChatAnthropic (default; current Claude model)
     - provider="openai"    → ChatOpenAI
-    Cached per (provider, temperature) so we don't rebuild clients per call.
+    - provider="nvidia"    → ChatOpenAI against the NVIDIA NIM endpoint
+    `model` overrides the provider's default model id (e.g. a fast chat model);
+    None → the configured default. Cached per (provider, temperature, model).
     """
     provider = settings.LLM_PROVIDER.lower()
 
@@ -31,7 +33,7 @@ def get_chat_model(temperature: float = 0.0):
         from langchain_openai import ChatOpenAI
 
         return ChatOpenAI(
-            model=settings.NVIDIA_MODEL,
+            model=model or settings.NVIDIA_MODEL,
             api_key=settings.NVIDIA_API_KEY,
             base_url=settings.NVIDIA_BASE_URL,
             temperature=temperature,
@@ -41,7 +43,7 @@ def get_chat_model(temperature: float = 0.0):
         from langchain_openai import ChatOpenAI
 
         return ChatOpenAI(
-            model=settings.OPENAI_MODEL,
+            model=model or settings.OPENAI_MODEL,
             api_key=settings.OPENAI_API_KEY,
             temperature=temperature,
         )
@@ -50,8 +52,14 @@ def get_chat_model(temperature: float = 0.0):
     from langchain_anthropic import ChatAnthropic
 
     return ChatAnthropic(
-        model=settings.ANTHROPIC_MODEL,
+        model=model or settings.ANTHROPIC_MODEL,
         api_key=settings.ANTHROPIC_API_KEY,
         temperature=temperature,
         max_tokens=1024,
     )
+
+
+def get_chat_model_fast():
+    """The chat assistant's model: the optional fast CHAT_MODEL override, or the
+    provider default when unset."""
+    return get_chat_model(model=settings.CHAT_MODEL or None)
