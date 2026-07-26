@@ -27,6 +27,17 @@ if sys.platform == "win32":
 sys.path.insert(0, __file__.rsplit("tests", 1)[0])  # repo's backend/ on sys.path
 
 from app.core.supabase import get_supabase, get_supabase_anon  # noqa: E402
+from app.core.config import settings  # noqa: E402
+
+# The automation-sync tests encrypt/decrypt fake OAuth tokens (app.core.crypto),
+# which needs a valid Fernet TOKEN_ENCRYPTION_KEY. In CI there's no .env, so mint
+# an ephemeral one for this process when it's absent — the tests round-trip
+# within a single run, so a per-run key is fine. crypto._get_fernet() reads the
+# key lazily on first use, and this runs at collection time (before any test),
+# so it takes effect. A real key (local .env or a CI secret) is left untouched.
+if not settings.TOKEN_ENCRYPTION_KEY.strip():
+    from cryptography.fernet import Fernet
+    settings.TOKEN_ENCRYPTION_KEY = Fernet.generate_key().decode()
 
 
 @pytest.fixture
