@@ -122,10 +122,10 @@ export default function ApiKeysPage() {
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
-            <KeyRound size={24} color="#9c6b1f" /> API Keys & Export
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text)", display: "flex", alignItems: "center", gap: 10 }}>
+            <KeyRound size={24} color="var(--color-primary-glow)" /> API Keys & Export
           </h1>
-          <p style={{ color: "#8a7a64", marginTop: 4 }}>Programmatic access for connecting an ERP or accounting tool.</p>
+          <p style={{ color: "var(--color-text-dim)", marginTop: 4 }}>Programmatic access for connecting an ERP or accounting tool.</p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <button className="btn-ghost" onClick={downloadCsv} disabled={busy !== null}
@@ -165,8 +165,8 @@ export default function ApiKeysPage() {
               placeholder="Key name, e.g. Zoho Books sync"
               autoFocus
               style={{
-                flex: 1, background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)",
-                borderRadius: 8, padding: "8px 12px", color: "#241c15", fontSize: "0.85rem", outline: "none",
+                flex: 1, background: "var(--color-surface)", border: "1px solid var(--color-stroke)",
+                borderRadius: 8, padding: "8px 12px", color: "var(--color-text)", fontSize: "0.85rem", outline: "none",
               }}
             />
             <button className="btn-primary" disabled={busy !== null || !newName.trim()} onClick={createKey}>Create</button>
@@ -181,7 +181,7 @@ export default function ApiKeysPage() {
               marginBottom: 16, padding: "12px 14px", borderRadius: 10,
               background: "rgba(185,121,28,0.08)", border: "1px solid rgba(185,121,28,0.28)",
             }}>
-            <div style={{ fontSize: "0.78rem", color: "#b9791c", marginBottom: 8, fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--color-warning)", marginBottom: 8, fontWeight: 600 }}>
               Copy this now — it won't be shown again:
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -189,9 +189,9 @@ export default function ApiKeysPage() {
                 {revealedKey}
               </code>
               <button className="btn-ghost" onClick={copyKey} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78rem", padding: "6px 10px" }}>
-                {copied ? <Check size={13} color="#2f8f52" /> : <Copy size={13} />} {copied ? "Copied" : "Copy"}
+                {copied ? <Check size={13} color="var(--color-success)" /> : <Copy size={13} />} {copied ? "Copied" : "Copy"}
               </button>
-              <button onClick={() => setRevealedKey(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8a7a64" }}>
+              <button onClick={() => setRevealedKey(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-dim)" }}>
                 <X size={15} />
               </button>
             </div>
@@ -200,9 +200,9 @@ export default function ApiKeysPage() {
       </AnimatePresence>
 
       {loading ? (
-        <div style={{ color: "#8a7a64", padding: 40, textAlign: "center" }}>Loading keys…</div>
+        <div style={{ color: "var(--color-text-dim)", padding: 40, textAlign: "center" }}>Loading keys…</div>
       ) : keys.length === 0 ? (
-        <div className="glass-card" style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>
+        <div className="glass-card" style={{ padding: 40, textAlign: "center", color: "var(--color-text-dim)" }}>
           No API keys yet. {isOwner && "Create one to connect an external tool."}
         </div>
       ) : (
@@ -211,12 +211,12 @@ export default function ApiKeysPage() {
             <StaggerItem key={k.id}>
               <div className="glass-card" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, opacity: k.revoked_at ? 0.5 : 1 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#241c15" }}>{k.name}</div>
-                  <div className="mono" style={{ fontSize: "0.76rem", color: "#8a7a64" }}>
-                    {k.key_prefix}… {k.revoked_at && <span style={{ color: "#b23a2e", fontFamily: "var(--font-inter)" }}>· revoked</span>}
+                  <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--color-text)" }}>{k.name}</div>
+                  <div className="mono" style={{ fontSize: "0.76rem", color: "var(--color-text-dim)" }}>
+                    {k.key_prefix}… {k.revoked_at && <span style={{ color: "var(--color-danger)", fontFamily: "var(--font-inter)" }}>· revoked</span>}
                   </div>
                 </div>
-                <div style={{ fontSize: "0.74rem", color: "#8a7a64", textAlign: "right" }}>
+                <div style={{ fontSize: "0.74rem", color: "var(--color-text-dim)", textAlign: "right" }}>
                   {k.last_used_at ? `Last used ${new Date(k.last_used_at).toLocaleDateString("en-IN")}` : "Never used"}
                 </div>
                 {isOwner && !k.revoked_at && (
@@ -226,7 +226,7 @@ export default function ApiKeysPage() {
                     title="Revoke this key"
                     style={{
                       background: "none", border: "1px solid rgba(178,58,46,0.25)", borderRadius: 8,
-                      padding: "6px 8px", cursor: "pointer", color: "#b23a2e", opacity: busy === k.id ? 0.6 : 1,
+                      padding: "6px 8px", cursor: "pointer", color: "var(--color-danger)", opacity: busy === k.id ? 0.6 : 1,
                     }}>
                     <Ban size={13} />
                   </button>

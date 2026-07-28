@@ -70,7 +70,10 @@ def _coerce_date_any(raw: Optional[str]) -> Optional[date]:
     if not raw:
         return None
     raw = str(raw).strip()
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%m/%d/%Y", "%d %B %Y", "%d %b %Y", "%Y/%m/%d"):
+    # 2-digit-year forms last, so a 4-digit year is never truncated (see the
+    # matching list in accounting_agent._DATE_FORMATS).
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%m/%d/%Y", "%d %B %Y", "%d %b %Y", "%Y/%m/%d",
+                "%d/%m/%y", "%d-%m-%y"):
         try:
             return datetime.strptime(raw, fmt).date()
         except ValueError:
@@ -98,6 +101,39 @@ def _vendors_agree(a: Optional[str], b: Optional[str]) -> Optional[bool]:
         return bool(wa & wb)
 
 
+def _compute_verdict(
+    amount_match: Optional[bool], date_match: Optional[bool], vendor_match: Optional[bool]
+) -> str:
+    votes = [v for v in (amount_match, date_match, vendor_match) if v is not None]
+    if not votes:
+        return "inconclusive"
+    if amount_match is False:            # money disagreement always escalates
+        return "mismatch"
+    if all(votes):
+        return "confirmed"
+    if sum(votes) >= len(votes) - 1:     # one soft-field (date/vendor) miss tolerated
+        return "confirmed"
+    return "mismatch"
+
+
+def apply_vendor_vote(result: VerificationResult, extracted_vendor: Optional[str]) -> VerificationResult:
+    """Fold a late-arriving vendor name into an existing verification result.
+
+    The vision check and the vendor classifier run CONCURRENTLY (they're both
+    ~30s LLM calls and neither needs the other's output to start), so the vendor
+    comparison can't happen inside verify_with_vision(). This re-runs just the
+    vendor vote and the verdict once the classifier's answer is available —
+    preserving the full three-field cross-check without serializing the calls.
+    """
+    if not result.ran or not extracted_vendor:
+        return result
+    vendor_match = _vendors_agree(extracted_vendor, result.vision_vendor)
+    return result.model_copy(update={
+        "vendor_match": vendor_match,
+        "verdict": _compute_verdict(result.amount_match, result.date_match, vendor_match),
+    })
+
+
 async def verify_with_vision(
     image_bytes: bytes,
     extracted_amount: Optional[float],
@@ -111,7 +147,16 @@ async def verify_with_vision(
     try:
         from openai import AsyncOpenAI
 
-        client = AsyncOpenAI(api_key=settings.NVIDIA_API_KEY, base_url=settings.NVIDIA_BASE_URL)
+        # Explicit timeout/retries: the OpenAI SDK defaults to a 600s timeout with
+        # 2 retries, so an unresponsive vision endpoint could stall a receipt for
+        # ~30 minutes. This is an advisory cross-check — it must fail fast and let
+        # the deterministic extraction stand.
+        client = AsyncOpenAI(
+            api_key=settings.NVIDIA_API_KEY,
+            base_url=settings.NVIDIA_BASE_URL,
+            timeout=settings.LLM_REQUEST_TIMEOUT,
+            max_retries=1,
+        )
         b64 = base64.b64encode(image_bytes).decode()
         resp = await client.chat.completions.create(
             model=settings.NVIDIA_VISION_MODEL,
@@ -142,17 +187,7 @@ async def verify_with_vision(
     date_match = (d1 == d2) if (d1 and d2) else None
     vendor_match = _vendors_agree(extracted_vendor, v_vendor)
 
-    votes = [v for v in (amount_match, date_match, vendor_match) if v is not None]
-    if not votes:
-        verdict = "inconclusive"
-    elif amount_match is False:            # money disagreement always escalates
-        verdict = "mismatch"
-    elif all(votes):
-        verdict = "confirmed"
-    elif sum(votes) >= len(votes) - 1:     # one soft-field (date/vendor) miss tolerated
-        verdict = "confirmed"
-    else:
-        verdict = "mismatch"
+    verdict = _compute_verdict(amount_match, date_match, vendor_match)
 
     return VerificationResult(
         ran=True,

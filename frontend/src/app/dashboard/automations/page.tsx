@@ -125,10 +125,10 @@ export default function AutomationsPage() {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
-          <Zap size={24} color="#9c6b1f" /> Automations
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text)", display: "flex", alignItems: "center", gap: 10 }}>
+          <Zap size={24} color="var(--color-primary-glow)" /> Automations
         </h1>
-        <p style={{ color: "#8a7a64", marginTop: 4 }}>
+        <p style={{ color: "var(--color-text-dim)", marginTop: 4 }}>
           Connect your inboxes and drives — receipts with attachments flow straight into the pipeline.
         </p>
       </Reveal>
@@ -149,7 +149,7 @@ export default function AutomationsPage() {
       </AnimatePresence>
 
       {loading ? (
-        <div style={{ color: "#8a7a64", padding: 40, textAlign: "center" }}>Loading connections…</div>
+        <div style={{ color: "var(--color-text-dim)", padding: 40, textAlign: "center" }}>Loading connections…</div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
           {/* ── Gmail card ── */}
@@ -160,25 +160,25 @@ export default function AutomationsPage() {
                   <Mail size={20} color="#ea4335" />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 650, color: "#241c15" }}>Gmail</div>
-                  <div style={{ fontSize: "0.75rem", color: "#8a7a64" }}>Read-only · attachments become receipts</div>
+                  <div style={{ fontWeight: 650, color: "var(--color-text)" }}>Gmail</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-dim)" }}>Read-only · attachments become receipts</div>
                 </div>
               </div>
               <StatusPill state={gmailState} />
             </div>
 
             {gmailState === "active" && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "#6b5d49", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "var(--color-text-muted)", marginBottom: 14 }}>
                 <Clock size={13} /> Last synced: {relativeTime(gmail?.last_synced_at ?? null)} · auto-polls every 15 min
               </div>
             )}
             {gmailState === "needs_reconnect" && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "#b9791c", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "var(--color-warning)", marginBottom: 14 }}>
                 <AlertTriangle size={13} /> Access expired or was revoked — reconnect to resume syncing.
               </div>
             )}
             {gmailState === "disconnected" && !status?.google_oauth_configured && (
-              <div style={{ fontSize: "0.78rem", color: "#b9791c", marginBottom: 14 }}>
+              <div style={{ fontSize: "0.78rem", color: "var(--color-warning)", marginBottom: 14 }}>
                 Google OAuth isn't configured yet — set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in backend/.env.
               </div>
             )}
@@ -210,12 +210,12 @@ export default function AutomationsPage() {
           {["Google Drive", "Dropbox", "Outlook"].map((name) => (
             <Reveal key={name} delay={0.08} className="glass-card" style={{ padding: 22, opacity: 0.55 }}>
               <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 11, background: "rgba(36,28,21,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Zap size={18} color="#8a7a64" />
+                <div style={{ width: 42, height: 42, borderRadius: 11, background: "var(--color-stroke)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Zap size={18} color="var(--color-text-dim)" />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 650, color: "#6b5d49" }}>{name}</div>
-                  <div style={{ fontSize: "0.75rem", color: "#8a7a64" }}>Coming soon</div>
+                  <div style={{ fontWeight: 650, color: "var(--color-text-muted)" }}>{name}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-dim)" }}>Coming soon</div>
                 </div>
               </div>
             </Reveal>
@@ -229,9 +229,9 @@ export default function AutomationsPage() {
 
 function StatusPill({ state }: { state: ProviderStatus }) {
   const meta = {
-    active: { color: "#2f8f52", label: "Connected", icon: CheckCircle2 },
-    needs_reconnect: { color: "#b9791c", label: "Reconnect", icon: AlertTriangle },
-    disconnected: { color: "#9c8c74", label: "Not connected", icon: Unplug },
+    active: { color: "var(--color-success)", label: "Connected", icon: CheckCircle2 },
+    needs_reconnect: { color: "var(--color-warning)", label: "Reconnect", icon: AlertTriangle },
+    disconnected: { color: "var(--color-text-dim)", label: "Not connected", icon: Unplug },
   }[state];
   const Icon = meta.icon;
   return (

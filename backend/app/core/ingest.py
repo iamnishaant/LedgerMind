@@ -8,6 +8,7 @@ LangGraph pipeline. Do not duplicate this logic in routes or connectors.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 
@@ -49,26 +50,37 @@ async def ingest_receipt(
     receipt_id = str(uuid.uuid4())
     storage_path = f"{business_id}/{receipt_id}/{filename}"
 
-    supabase.storage.from_("receipts").upload(
-        storage_path, file_bytes, {"content-type": content_type or "application/octet-stream"}
-    )
+    # supabase-py is synchronous; these are network round-trips sitting directly
+    # in the upload request path. Run them on a worker thread so a slow storage
+    # write doesn't pin the event loop and stall every other in-flight request.
+    def _store() -> None:
+        supabase.storage.from_("receipts").upload(
+            storage_path, file_bytes, {"content-type": content_type or "application/octet-stream"}
+        )
+        supabase.table("receipts").insert({
+            "id": receipt_id,
+            "business_id": business_id,
+            "uploaded_by": uploaded_by,
+            "storage_path": storage_path,
+            "file_name": filename,
+            "file_type": content_type,
+            "status": "pending",
+            "metadata": {"source": source},
+        }).execute()
 
-    supabase.table("receipts").insert({
-        "id": receipt_id,
-        "business_id": business_id,
-        "uploaded_by": uploaded_by,
-        "storage_path": storage_path,
-        "file_name": filename,
-        "file_type": content_type,
-        "status": "pending",
-        "metadata": {"source": source},
-    }).execute()
-
+    await asyncio.to_thread(_store)
     return receipt_id
 
 
 async def run_ingest_pipeline(receipt_id: str, business_id: str, uploaded_by: str, image_bytes: bytes) -> None:
-    """Run the LangGraph agent pipeline for an ingested receipt (OCR → review? → accounting)."""
+    """Run the LangGraph agent pipeline for an ingested receipt (OCR → review? → accounting).
+
+    Wrapped in an outer watchdog: every step already has its own timeout, but this
+    guarantees the receipt reaches a terminal state no matter what stalls. A
+    receipt left on 'pending' is the worst outcome — the UI polls it forever and
+    the user gets no signal at all.
+    """
+    supabase = get_supabase()
     try:
         graph = await get_graph()
         config = {"configurable": {"thread_id": receipt_id}}
@@ -83,10 +95,49 @@ async def run_ingest_pipeline(receipt_id: str, business_id: str, uploaded_by: st
             "error": None,
             "status": "processing",
         }
-        await graph.ainvoke(initial_state, config=config)
-    except Exception:
+        await asyncio.wait_for(
+            graph.ainvoke(initial_state, config=config),
+            timeout=settings.INGEST_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        logger.error(
+            "Ingest pipeline timed out after %ss for receipt_id=%r business_id=%r",
+            settings.INGEST_TIMEOUT_SECONDS, receipt_id, business_id,
+        )
+        mark_receipt_failed(supabase, business_id, receipt_id,
+              f"Processing timed out after {settings.INGEST_TIMEOUT_SECONDS:.0f}s")
+    except Exception as e:
         # This runs as a background task — a client never sees this exception,
         # so without logging it a pipeline failure would be completely invisible.
         logger.exception("Ingest pipeline failed for receipt_id=%r business_id=%r", receipt_id, business_id)
-        supabase = get_supabase()
+        mark_receipt_failed(supabase, business_id, receipt_id, str(e))
+    else:
+        # Safety net: if the graph finished but left the row non-terminal (e.g. a
+        # node returned a failed state without persisting it), don't strand it.
+        try:
+            rows = supabase.table("receipts").select("status").eq("id", receipt_id).execute().data
+            if rows and rows[0].get("status") in (None, "pending", "processing"):
+                logger.warning(
+                    "Receipt %r left non-terminal (%s) after pipeline completion — marking failed",
+                    receipt_id, rows[0].get("status"),
+                )
+                mark_receipt_failed(supabase, business_id, receipt_id,
+                      "Pipeline finished without reaching a terminal state")
+        except Exception:
+            logger.exception("Terminal-state check failed for receipt_id=%r", receipt_id)
+
+
+def mark_receipt_failed(supabase, business_id: str, receipt_id: str, error: str) -> None:
+    """Mark a receipt failed and record why (agent_runs carries the message —
+    the receipts table has no error column; see supabase/schema.sql)."""
+    try:
         supabase.table("receipts").update({"status": "failed"}).eq("id", receipt_id).execute()
+        supabase.table("agent_runs").insert({
+            "business_id": business_id,
+            "receipt_id": receipt_id,
+            "agent_name": "ingest_pipeline",
+            "status": "failed",
+            "error_message": error[:500],
+        }).execute()
+    except Exception:
+        logger.exception("Could not persist failure for receipt_id=%r", receipt_id)

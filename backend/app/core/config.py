@@ -32,11 +32,31 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"
 
-    # Optional fast model for the interactive chat assistant only. Chat is
-    # latency-sensitive and benefits from a small, fast model (e.g. Anthropic
-    # 'claude-haiku-4-5' or an OpenAI mini). Blank → use the provider default
-    # model above (same behavior as before this setting existed).
-    CHAT_MODEL: str = ""
+    # Model for the interactive chat assistant ONLY (get_chat_model_fast()); the
+    # heavier reasoning agents keep NVIDIA_MODEL (the 70B). Chat is
+    # latency-sensitive, so we default it to a small, fast NVIDIA model — the
+    # injected financial snapshot means most questions need no tool call, so an
+    # 8B answers them well and streams ~5-10x faster than the 70B on the free
+    # tier, at zero extra cost (still NVIDIA, no Anthropic bill). Blank → fall
+    # back to the provider default model. Override in .env for a different model.
+    CHAT_MODEL: str = "meta/llama-3.1-8b-instruct"
+
+    # Model for the CFO brief. Empty → CHAT_MODEL (the fast one).
+    # Measured 2026-07 against this NVIDIA account: llama-3.3-70b timed out on
+    # EVERY attempt (>60s, three consecutive runs) while llama-3.1-8b returned
+    # valid JSON in ~1.5s. The 70B is nominally the better analyst, but a brief
+    # that never arrives is worth nothing — so the default is the model that
+    # actually responds. Point this at a larger model if your provider serves it
+    # reliably; run_cfo_agent() falls back to CHAT_MODEL if it stalls.
+    CFO_MODEL: str = ""
+
+    # LLM reliability knobs. NVIDIA's free tier is slow (~30s/call) but should
+    # never hang forever; a request that exceeds the timeout fails fast so the
+    # user gets an error + Retry instead of an indefinite spinner. max_retries
+    # covers transient httpx.ConnectError / DNS blips (seen in this project)
+    # with LangChain's built-in exponential backoff.
+    LLM_REQUEST_TIMEOUT: float = 60.0
+    LLM_MAX_RETRIES: int = 2
 
     # NVIDIA NIM (build.nvidia.com) — OpenAI-compatible endpoint, hosts Llama/etc.
     NVIDIA_API_KEY: str = ""
@@ -48,7 +68,19 @@ class Settings(BaseSettings):
     # Multi-model OCR verification: a vision LLM independently reads the receipt
     # and any disagreement with the deterministic extraction flags human review.
     # The vision model never overwrites extracted numbers — consensus gating only.
+    # Costs a full extra (slow) vision call per receipt — set false to trade the
+    # cross-check for roughly half the processing time.
     OCR_VISION_VERIFY: bool = True
+
+    # ── Receipt pipeline timeouts ────────────────────────────
+    # Nothing in the ingest path may run unbounded: a stuck step used to leave a
+    # receipt on 'pending' forever with the UI polling it indefinitely.
+    # OCR_TIMEOUT_SECONDS covers the blocking PaddleOCR pass (first call may also
+    # download model weights). INGEST_TIMEOUT_SECONDS is the outer watchdog for
+    # the whole graph (OCR + classification + vision + accounting); on expiry the
+    # receipt is marked 'failed' so the user sees a terminal state.
+    OCR_TIMEOUT_SECONDS: float = 120.0
+    INGEST_TIMEOUT_SECONDS: float = 300.0
 
     # Inngest
     INNGEST_EVENT_KEY: str = ""

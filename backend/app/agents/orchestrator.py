@@ -14,6 +14,7 @@ payload to keep graph state lean as agent count grows.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import TypedDict, Optional
 from langgraph.graph import StateGraph, END
 
@@ -25,6 +26,35 @@ from app.core.supabase import get_supabase
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _mark_failed(receipt_id: str, business_id: str, agent_name: str, error: str) -> None:
+    """Persist a terminal failure to the DB.
+
+    CRITICAL: a node that only returns {"status": "failed"} in graph state leaves
+    the `receipts` row on its previous value (usually 'pending') — the graph then
+    routes to END and ainvoke() returns *normally*, so the caller's except block
+    never fires either. The receipt would sit at 'pending' forever and the UI
+    would poll it forever. Every terminal failure MUST be written here.
+    """
+    try:
+        supabase = get_supabase()
+        # `receipts` has no error column (see supabase/schema.sql) — the reason
+        # lives on the agent_runs row, which the Audit Log page already renders.
+        supabase.table("receipts").update({
+            "status": "failed",
+            "processed_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", receipt_id).execute()
+        supabase.table("agent_runs").insert({
+            "business_id": business_id,
+            "receipt_id": receipt_id,
+            "agent_name": agent_name,
+            "status": "failed",
+            "error_message": error[:500],
+        }).execute()
+    except Exception:
+        # Never let bookkeeping-of-a-failure raise and mask the original error.
+        logger.exception("Could not persist failed status for receipt_id=%r", receipt_id)
 
 
 # ── Graph State ──────────────────────────────────────────────
@@ -97,6 +127,7 @@ async def ocr_node(state: ReceiptState) -> ReceiptState:
         }
     except Exception as e:
         logger.exception("OCR node failed for receipt_id=%r", state.get("receipt_id"))
+        _mark_failed(state["receipt_id"], state["business_id"], "ocr_agent", str(e))
         return {**state, "error": str(e), "status": "failed"}
 
 
@@ -143,6 +174,7 @@ async def accounting_node(state: ReceiptState) -> ReceiptState:
         }
     except Exception as e:
         logger.exception("Accounting node failed for receipt_id=%r", state.get("receipt_id"))
+        _mark_failed(state["receipt_id"], state["business_id"], "accounting_agent", str(e))
         return {**state, "error": str(e), "status": "failed"}
 
 

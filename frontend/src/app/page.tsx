@@ -383,17 +383,19 @@ function Agents() {
 
 // ── Roadmap ───────────────────────────────────────────────────
 function Roadmap() {
+  // Status reflects what is actually shipped and reachable in the product.
+  // "live" = the feature has a working page/agent behind it today.
   const phases = [
-    { n: "1", name: "Expense Tracking MVP", status: "building" },
-    { n: "2", name: "AI Bookkeeper", status: "building" },
-    { n: "3", name: "GST Intelligence", status: "planned" },
-    { n: "4", name: "AI Chat (RAG)", status: "building" },
-    { n: "5", name: "Budget Intelligence", status: "building" },
-    { n: "6", name: "Forecasting", status: "building" },
-    { n: "7", name: "AI CFO", status: "planned" },
-    { n: "8", name: "Automation & Integrations", status: "planned" },
-    { n: "9", name: "Multi-Agent Collaboration", status: "planned" },
-    { n: "10", name: "Enterprise", status: "planned" },
+    { n: "1", name: "Expense Tracking MVP", status: "live" },          // receipts, expenses, dashboard
+    { n: "2", name: "AI Bookkeeper", status: "live" },                 // ocr + accounting agents
+    { n: "3", name: "GST Intelligence", status: "live" },              // /dashboard/gst + gst_agent
+    { n: "4", name: "AI Chat", status: "live" },                       // /dashboard/chat
+    { n: "5", name: "Budget Intelligence", status: "live" },           // /dashboard/budgets + budget_monitor
+    { n: "6", name: "Forecasting", status: "live" },                   // /dashboard/forecasts + forecast_agent
+    { n: "7", name: "AI CFO", status: "live" },                        // /dashboard/cfo + cfo_agent
+    { n: "8", name: "Automation & Integrations", status: "live" },     // /dashboard/automations (Gmail)
+    { n: "9", name: "Multi-Agent Collaboration", status: "live" },     // LangGraph orchestrator + fraud agent
+    { n: "10", name: "Enterprise", status: "live" },                   // team, approvals, api keys, audit
   ];
   return (
     <section id="roadmap" className="section" style={{ background: "linear-gradient(180deg, transparent, rgba(79,114,104,0.05), transparent)" }}>
@@ -405,7 +407,9 @@ function Roadmap() {
         </Reveal>
         <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 14 }} amount={0.08}>
           {phases.map((p) => {
+            const live = p.status === "live";
             const building = p.status === "building";
+            const done = live || building;
             return (
               <StaggerItem key={p.n}>
                 <div className="ring-card" style={{ padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
@@ -413,13 +417,15 @@ function Roadmap() {
                     width: 38, height: 38, borderRadius: 10, flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontWeight: 700, fontSize: "0.95rem",
-                    background: building ? "linear-gradient(135deg, #c9962e, #a8541f)" : "rgba(36,28,21,0.06)",
-                    color: building ? "#fff" : C.muted,
-                  }}>{p.n}</div>
+                    background: done ? "linear-gradient(135deg, #c9962e, #a8541f)" : "rgba(36,28,21,0.06)",
+                    color: done ? "#fff" : C.muted,
+                  }}>
+                    {live ? <Check size={18} strokeWidth={3} /> : p.n}
+                  </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: "0.88rem" }}>{p.name}</div>
-                    <span style={{ fontSize: "0.68rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: building ? C.success : C.muted }}>
-                      {building ? "● Building" : "Planned"}
+                    <span style={{ fontSize: "0.68rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: done ? C.success : C.muted }}>
+                      {live ? "✓ Live" : building ? "● Building" : "Planned"}
                     </span>
                   </div>
                 </div>

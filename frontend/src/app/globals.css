@@ -81,6 +81,66 @@
     --chart-3: #4f7268;   /* sage-teal  */
     --chart-4: #8a4a6b;   /* muted plum */
     --chart-5: #2f8f52;   /* forest     */
+
+    /* Component-surface tokens (themed) — shared chrome reads these so dark mode
+       flips in one place instead of per-component hardcoded hex. */
+    --color-sidebar: #fffbf3;
+    --color-overlay: rgba(36, 28, 21, 0.32);
+    --ghost-bg: rgba(36, 28, 21, 0.02);
+    --ghost-bg-hover: rgba(36, 28, 21, 0.05);
+    color-scheme: light;
+  }
+
+  /* ── Dark theme (opt-in via <html data-theme="dark">) — deep espresso + cream,
+        same gold/terracotta accents brightened for contrast on a dark surface. ── */
+  :root[data-theme="dark"] {
+    --background: 28 20% 8%;
+    --foreground: 38 30% 90%;
+    --card: 28 15% 12%;
+    --card-foreground: 38 30% 90%;
+    --popover: 28 15% 13%;
+    --popover-foreground: 38 30% 90%;
+    --primary: 38 65% 56%;
+    --primary-foreground: 28 25% 10%;
+    --secondary: 30 12% 20%;
+    --secondary-foreground: 38 30% 90%;
+    --muted: 30 10% 17%;
+    --muted-foreground: 36 18% 66%;
+    --accent: 30 12% 22%;
+    --accent-foreground: 38 30% 90%;
+    --destructive: 6 62% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 34 14% 24%;
+    --input: 34 14% 24%;
+    --ring: 38 65% 56%;
+
+    --color-bg: #171009;
+    --color-stroke: rgba(236, 225, 208, 0.12);
+    --color-stroke-strong: rgba(236, 225, 208, 0.22);
+    --color-primary-strong: #c9662a;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 14px 34px -14px rgba(0, 0, 0, 0.6), 0 4px 12px -4px rgba(0, 0, 0, 0.5);
+    --shadow-pop: 0 20px 50px -14px rgba(0, 0, 0, 0.6);
+
+    /* @theme accents, overridden at runtime for direct var() consumers */
+    --color-primary-glow: #e0ab48;
+    --color-cyan: #6fa093;
+    --color-success: #4bb874;
+    --color-warning: #e0a03a;
+    --color-danger: #e26a5c;
+    --color-surface: #211a13;
+    --color-surface-2: #2b2219;
+    --color-text: #ece1d0;
+    --color-text-muted: #bcac94;
+    /* #8e7f69 measured 4.41:1 against the card surface — just under WCAG AA for
+       normal text. Nudged so captions and tertiary labels clear 4.5:1. */
+    --color-text-dim: #9a8b71;
+
+    --color-sidebar: #1c150e;
+    --color-overlay: rgba(0, 0, 0, 0.55);
+    --ghost-bg: rgba(236, 225, 208, 0.04);
+    --ghost-bg-hover: rgba(236, 225, 208, 0.09);
+    color-scheme: dark;
   }
 }
 
@@ -90,13 +150,44 @@
   }
   body {
     @apply text-foreground;
-    /* Single warm-editorial theme, forced explicitly so nothing can flash a
-       different palette on load. */
     background-color: var(--color-bg);
     font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
       "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Smooth cross-fade when toggling light/dark. */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Consistent, visible keyboard focus for interactive elements app-wide. */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-primary-glow);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Skip-to-content link — visible only when focused (keyboard users). */
+  .skip-link {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 200;
+    transform: translateY(-160%);
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-stroke-strong);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-pop);
+    transition: transform 0.18s ease;
+  }
+  .skip-link:focus {
+    transform: translateY(0);
   }
 
   /* Editorial serif accent — headlines, section eyebrows, pull-quotes. */
@@ -121,7 +212,7 @@
 
 /* ── Card surface ────────────────────────────────────────────── */
 .glass-card {
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid var(--color-stroke);
   border-radius: 16px;
   box-shadow: var(--shadow-card);
@@ -191,7 +282,7 @@
 /* ── Text input / select ────────────────────────────────────── */
 .input {
   width: 100%;
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid var(--color-stroke);
   border-radius: 10px;
   padding: 10px 13px;
@@ -260,7 +351,7 @@
 /* Gradient-border card (glow ring on hover) */
 .ring-card {
   position: relative;
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid var(--color-stroke);
   border-radius: 18px;
   box-shadow: var(--shadow-card);
@@ -289,7 +380,7 @@
 
 /* Ghost / secondary button — outline treatment */
 .btn-ghost {
-  background: rgba(36, 28, 21, 0.02);
+  background: var(--ghost-bg);
   color: var(--color-text);
   border: 1px solid var(--color-stroke);
   border-radius: 10px;
@@ -299,7 +390,7 @@
   cursor: pointer;
   transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
-.btn-ghost:hover { background: rgba(36, 28, 21, 0.05); border-color: var(--color-stroke-strong); }
+.btn-ghost:hover { background: var(--ghost-bg-hover); border-color: var(--color-stroke-strong); }
 .btn-ghost:active { transform: translateY(0.5px); }
 
 .btn-lg { padding: 14px 28px; font-size: 0.98rem; border-radius: 12px; }

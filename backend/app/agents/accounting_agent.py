@@ -11,7 +11,7 @@ from typing import Optional
 from langchain_core.prompts import ChatPromptTemplate
 
 from app.core.config import settings
-from app.core.llm import get_chat_model
+from app.core.llm import get_chat_model_fast
 from app.core.supabase import get_supabase
 from app.agents.gst_agent import evaluate_itc
 from app.agents.vendor_memory import learned_category, recent_correction_examples
@@ -24,6 +24,11 @@ logger = logging.getLogger(__name__)
 _DATE_FORMATS = (
     "%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%m/%d/%Y",
     "%d %B %Y", "%d %b %Y", "%Y/%m/%d",
+    # 2-digit years, tried last so a 4-digit year is never misread. Standard
+    # POSIX pivot: 00–68 → 2000s, 69–99 → 1900s. Common on Indian thermal
+    # receipts ("03/06/26"); without these the date silently fell back to
+    # today's date, so every such expense was booked on the wrong day.
+    "%d/%m/%y", "%d-%m-%y",
 )
 
 
@@ -113,7 +118,11 @@ async def _classify_expense(ocr_result: dict, business_id: Optional[str] = None)
     # Tier 2: few-shot-nudged LLM.
     examples = recent_correction_examples(business_id) if business_id else []
     try:
-        llm = get_chat_model()
+        # Fast model, not the 70B: this picks one of 11 fixed categories from
+        # already-extracted fields. It sits on every receipt's critical path, and
+        # the large model was costing minutes per receipt on the free tier
+        # (worst case timeout x retries) for no measurable accuracy gain.
+        llm = get_chat_model_fast()
         chain = _accounting_prompt | llm
         result = await chain.ainvoke({
             "business_examples": _format_examples(examples),
@@ -140,12 +149,19 @@ def _detect_duplicate(business_id: str, amount: float, vendor_name: str, expense
     try:
         parsed = _coerce_date(expense_date)
         supabase = get_supabase()
+        # Case-INSENSITIVE vendor match. An exact .eq() missed the most common
+        # real duplicate: the same receipt uploaded twice, where OCR/the model
+        # cased the vendor differently each run ("COLGATE MAXFRESH 42G" vs
+        # "Colgate Maxfresh 42G") — so both rows were booked unflagged.
+        # ilike without wildcards is an exact case-insensitive comparison; the
+        # vendor's own % and _ are escaped so they can't act as wildcards.
+        vendor_pattern = (vendor_name or "").replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         query = (
             supabase.table("expenses")
             .select("id")
             .eq("business_id", business_id)
             .eq("amount", amount)
-            .eq("vendor_name", vendor_name)
+            .ilike("vendor_name", vendor_pattern)
         )
         if parsed:
             low = (parsed - timedelta(days=3)).isoformat()
@@ -166,10 +182,21 @@ async def run_accounting_agent(receipt_id: str, business_id: str, ocr_result: di
     2. Detect duplicates
     3. Write expense record to Supabase
     """
+    # An expense with no amount cannot be booked — `expenses.amount` is NOT NULL.
+    # Fail fast with an actionable message instead of letting Postgres reject the
+    # insert with an opaque 23502 constraint dump. Reaching here with no amount
+    # means either the OCR review gate was bypassed or a human approved the
+    # receipt without supplying the total.
+    amount = ocr_result.get("amount")
+    if amount is None:
+        raise ValueError(
+            "Cannot book an expense with no amount — the total could not be read "
+            "from this receipt. Open it and enter the amount to continue."
+        )
+
     # Step 1: Classify (informed by this business's past corrections)
     classification = await _classify_expense(ocr_result, business_id)
 
-    amount = ocr_result.get("amount")
     vendor_name = ocr_result.get("vendor_name", "Unknown Vendor")
     currency = ocr_result.get("currency", "INR")
 

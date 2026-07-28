@@ -5,8 +5,8 @@
  * run, per receipt, with its outcome. Nothing new is written here; this page
  * just surfaces data every agent has already been recording since Phase 1.
  */
-import { useEffect, useMemo, useState } from "react";
-import { History, Search, CheckCircle2, XCircle, Clock3, HelpCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { History, Search, CheckCircle2, XCircle, Clock3, HelpCircle, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Reveal, Stagger, StaggerItem, AnimatedNumber } from "@/components/motion/Primitives";
 import { useBusiness } from "@/lib/business-context";
@@ -29,28 +29,15 @@ interface Summary {
   by_status: Record<string, number>;
 }
 
-// ── Illustrative fallback data (used when the API is unreachable) ──
-const SAMPLE: AgentRun[] = [
-  { id: "r1", receipt_id: "8f2c1a90", agent_name: "ocr_agent", status: "completed", output_payload: { confidence: 0.94 }, created_at: "2026-07-21T09:12:00Z" },
-  { id: "r2", receipt_id: "8f2c1a90", agent_name: "accounting_agent", status: "completed", output_payload: { category: "Software & Subscriptions" }, created_at: "2026-07-21T09:12:03Z" },
-  { id: "r3", receipt_id: "8f2c1a90", agent_name: "fraud_agent", status: "completed", output_payload: { fraud_risk: "low" }, created_at: "2026-07-21T09:12:04Z" },
-  { id: "r4", receipt_id: "8f2c1a90", agent_name: "budget_monitor", status: "completed", output_payload: { budget_alerts: [] }, created_at: "2026-07-21T09:12:04Z" },
-  { id: "r5", receipt_id: "b71de203", agent_name: "ocr_agent", status: "completed", output_payload: { confidence: 0.61 }, created_at: "2026-07-20T15:40:00Z" },
-  { id: "r6", receipt_id: "b71de203", agent_name: "accounting_agent", status: "completed", output_payload: { category: "Equipment" }, created_at: "2026-07-20T15:41:10Z" },
-  { id: "r7", receipt_id: "b71de203", agent_name: "fraud_agent", status: "completed", output_payload: { fraud_risk: "high" }, created_at: "2026-07-20T15:41:11Z" },
-  { id: "r8", receipt_id: "c93af114", agent_name: "ocr_agent", status: "failed", error_message: "Vision LLM timeout", created_at: "2026-07-19T11:05:00Z" },
-];
-const SAMPLE_SUMMARY: Summary = {
-  total_runs: 8, failed_runs: 1, success_rate: 87.5,
-  by_agent: { ocr_agent: 3, accounting_agent: 2, fraud_agent: 2, budget_monitor: 1 },
-  by_status: { completed: 7, failed: 1 },
+const EMPTY_SUMMARY: Summary = {
+  total_runs: 0, failed_runs: 0, success_rate: 0, by_agent: {}, by_status: {},
 };
 
 const STATUS_META: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  completed: { label: "completed", color: "#2f8f52", icon: CheckCircle2 },
-  failed: { label: "failed", color: "#b23a2e", icon: XCircle },
-  started: { label: "started", color: "#8a7a64", icon: Clock3 },
-  awaiting_human: { label: "awaiting human", color: "#b9791c", icon: HelpCircle },
+  completed: { label: "completed", color: "var(--color-success)", icon: CheckCircle2 },
+  failed: { label: "failed", color: "var(--color-danger)", icon: XCircle },
+  started: { label: "started", color: "var(--color-text-dim)", icon: Clock3 },
+  awaiting_human: { label: "awaiting human", color: "var(--color-warning)", icon: HelpCircle },
 };
 
 const AGENT_LABEL: Record<string, string> = {
@@ -80,36 +67,35 @@ function formatTime(iso: string): string {
 export default function AuditPage() {
   const { businessId, authedFetch } = useBusiness();
   const [runs, setRuns] = useState<AgentRun[]>([]);
-  const [summary, setSummary] = useState<Summary>(SAMPLE_SUMMARY);
+  const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [loading, setLoading] = useState(true);
-  const [usingSample, setUsingSample] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeAgent, setActiveAgent] = useState("All");
   const [activeStatus, setActiveStatus] = useState("All");
   const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [runsRes, summaryRes] = await Promise.all([
-          authedFetch(`/api/v1/audit?business_id=${businessId}&limit=100`),
-          authedFetch(`/api/v1/audit/summary?business_id=${businessId}`),
-        ]);
-        if (!runsRes.ok || !summaryRes.ok) throw new Error("bad status");
-        const runsData = await runsRes.json();
-        const summaryData = await summaryRes.json();
-        if (cancelled) return;
-        const rows: AgentRun[] = runsData.runs ?? [];
-        if (rows.length === 0) { setRuns(SAMPLE); setSummary(SAMPLE_SUMMARY); setUsingSample(true); }
-        else { setRuns(rows); setSummary(summaryData); }
-      } catch {
-        if (!cancelled) { setRuns(SAMPLE); setSummary(SAMPLE_SUMMARY); setUsingSample(true); }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [runsRes, summaryRes] = await Promise.all([
+        authedFetch(`/api/v1/audit?business_id=${businessId}&limit=100`),
+        authedFetch(`/api/v1/audit/summary?business_id=${businessId}`),
+      ]);
+      if (!runsRes.ok || !summaryRes.ok) throw new Error(`Request failed (${runsRes.status})`);
+      const runsData = await runsRes.json();
+      const summaryData = await summaryRes.json();
+      setRuns((runsData.runs ?? []) as AgentRun[]);
+      setSummary((summaryData ?? EMPTY_SUMMARY) as Summary);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't load the audit log.");
+      setSummary(EMPTY_SUMMARY);
+    } finally {
+      setLoading(false);
+    }
   }, [businessId, authedFetch]);
+
+  useEffect(() => { load(); }, [load]);
 
   const agents = useMemo(() => ["All", ...Array.from(new Set(runs.map(r => r.agent_name)))], [runs]);
   const statuses = useMemo(() => ["All", ...Array.from(new Set(runs.map(r => r.status)))], [runs]);
@@ -128,35 +114,46 @@ export default function AuditPage() {
     <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
-            <History size={24} color="#9c6b1f" /> Audit Log
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text)", display: "flex", alignItems: "center", gap: 10 }}>
+            <History size={24} color="var(--color-primary-glow)" /> Audit Log
           </h1>
-          <p style={{ color: "#8a7a64", marginTop: "4px" }}>
+          <p style={{ color: "var(--color-text-dim)", marginTop: "4px" }}>
             Every agent run across the pipeline — OCR, Accounting, Fraud, Budget Monitor.
-            {usingSample && <span style={{ color: "#b9791c" }}> · showing sample data (backend offline)</span>}
           </p>
         </div>
         <div style={{ position: "relative" }}>
-          <Search size={15} color="#8a7a64" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
+          <Search size={15} color="var(--color-text-dim)" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search agent or receipt…"
             style={{
-              background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)",
-              borderRadius: 10, padding: "9px 14px 9px 34px", color: "#241c15",
+              background: "var(--color-surface)", border: "1px solid var(--color-stroke)",
+              borderRadius: 10, padding: "9px 14px 9px 34px", color: "var(--color-text)",
               fontSize: "0.85rem", outline: "none", width: 240,
             }}
           />
         </div>
       </Reveal>
 
+      {error && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", background: "rgba(178,58,46,0.08)", border: "1px solid rgba(178,58,46,0.2)", borderRadius: 12, padding: "14px 18px", marginBottom: 22 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <XCircle size={18} color="var(--color-danger)" />
+            <span style={{ fontSize: "0.85rem", color: "var(--color-danger)" }}>{error} — is the backend running?</span>
+          </div>
+          <button onClick={load} className="btn-ghost" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
+
       {/* Summary tiles */}
       <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "22px" }}>
         {[
           { label: "Total runs", value: summary.total_runs, suffix: "", icon: History, color: "#b8862e" },
-          { label: "Success rate", value: summary.success_rate, suffix: "%", icon: CheckCircle2, color: "#2f8f52" },
-          { label: "Failed runs", value: summary.failed_runs, suffix: "", icon: XCircle, color: "#b23a2e" },
+          { label: "Success rate", value: summary.success_rate, suffix: "%", icon: CheckCircle2, color: "var(--color-success)" },
+          { label: "Failed runs", value: summary.failed_runs, suffix: "", icon: XCircle, color: "var(--color-danger)" },
         ].map((t) => {
           const Icon = t.icon;
           return (
@@ -166,10 +163,10 @@ export default function AuditPage() {
                   <Icon size={18} color={t.color} />
                 </div>
                 <div>
-                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#241c15" }}>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--color-text)" }}>
                     <AnimatedNumber value={t.value} suffix={t.suffix} />
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#8a7a64" }}>{t.label}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-dim)" }}>{t.label}</div>
                 </div>
               </div>
             </StaggerItem>
@@ -188,9 +185,9 @@ export default function AuditPage() {
               style={{
                 padding: "7px 14px", borderRadius: 999, fontSize: "0.8rem", fontWeight: 600,
                 cursor: "pointer", transition: "all 0.15s ease",
-                border: `1px solid ${active ? "rgba(184,134,46,0.5)" : "rgba(36,28,21,0.09)"}`,
+                border: `1px solid ${active ? "rgba(184,134,46,0.5)" : "var(--color-stroke)"}`,
                 background: active ? "rgba(184,134,46,0.14)" : "transparent",
-                color: active ? "#9c6b1f" : "#6b5d49",
+                color: active ? "#9c6b1f" : "var(--color-text-muted)",
               }}>
               {a === "All" ? "All agents" : (AGENT_LABEL[a] ?? a)}
             </button>
@@ -208,9 +205,9 @@ export default function AuditPage() {
               style={{
                 padding: "6px 12px", borderRadius: 999, fontSize: "0.75rem", fontWeight: 600,
                 cursor: "pointer", transition: "all 0.15s ease",
-                border: `1px solid ${active ? `${meta?.color ?? "#b8862e"}55` : "rgba(36,28,21,0.07)"}`,
+                border: `1px solid ${active ? `${meta?.color ?? "#b8862e"}55` : "var(--color-stroke)"}`,
                 background: active ? `${meta?.color ?? "#b8862e"}18` : "transparent",
-                color: active ? (meta?.color ?? "#9c6b1f") : "#8a7a64",
+                color: active ? (meta?.color ?? "#9c6b1f") : "var(--color-text-dim)",
               }}>
               {s === "All" ? "All statuses" : (meta?.label ?? s)}
             </button>
@@ -222,18 +219,30 @@ export default function AuditPage() {
       <div className="glass-card" style={{ padding: "8px 8px 12px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(36,28,21,0.07)" }}>
+            <tr style={{ borderBottom: "1px solid var(--color-stroke)" }}>
               {["Time", "Agent", "Status", "Receipt", "Summary"].map((h) => (
-                <th key={h} style={{ textAlign: "left", padding: "12px 16px", fontSize: "0.72rem", color: "#8a7a64", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                <th key={h} style={{ textAlign: "left", padding: "12px 16px", fontSize: "0.72rem", color: "var(--color-text-dim)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             <AnimatePresence mode="popLayout" initial={false}>
               {loading ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>Loading audit log…</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "var(--color-text-dim)" }}>Loading audit log…</td></tr>
+              ) : error ? (
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "var(--color-text-dim)" }}>Couldn&apos;t load the audit log.</td></tr>
+              ) : runs.length === 0 ? (
+                <tr><td colSpan={5} style={{ padding: "48px 24px", textAlign: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(184,134,46,0.14)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <History size={24} color="var(--color-primary-glow)" />
+                    </div>
+                    <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--color-text)" }}>No agent activity yet</div>
+                    <div style={{ fontSize: "0.85rem", color: "var(--color-text-dim)", maxWidth: 400 }}>Once you upload receipts, every OCR, Accounting, Fraud and Budget-Monitor run will appear here.</div>
+                  </div>
+                </td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>No agent runs match this filter.</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "var(--color-text-dim)" }}>No agent runs match this filter.</td></tr>
               ) : (
                 filtered.map((r, i) => {
                   const meta = STATUS_META[r.status] ?? STATUS_META.started;
@@ -246,20 +255,20 @@ export default function AuditPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3, delay: Math.min(i * 0.02, 0.3) }}
-                      style={{ borderBottom: "1px solid rgba(36,28,21,0.05)" }}
+                      style={{ borderBottom: "1px solid var(--color-stroke)" }}
                       onMouseEnter={ev => (ev.currentTarget as HTMLElement).style.background = "rgba(184,134,46,0.04)"}
                       onMouseLeave={ev => (ev.currentTarget as HTMLElement).style.background = "transparent"}>
-                      <td style={{ padding: "13px 16px", fontSize: "0.8rem", color: "#8a7a64", whiteSpace: "nowrap" }}>{formatTime(r.created_at)}</td>
-                      <td style={{ padding: "13px 16px", fontSize: "0.875rem", color: "#241c15", fontWeight: 500 }}>{AGENT_LABEL[r.agent_name] ?? r.agent_name}</td>
+                      <td style={{ padding: "13px 16px", fontSize: "0.8rem", color: "var(--color-text-dim)", whiteSpace: "nowrap" }}>{formatTime(r.created_at)}</td>
+                      <td style={{ padding: "13px 16px", fontSize: "0.875rem", color: "var(--color-text)", fontWeight: 500 }}>{AGENT_LABEL[r.agent_name] ?? r.agent_name}</td>
                       <td style={{ padding: "13px 16px" }}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.7rem", fontWeight: 700, color: meta.color, background: `${meta.color}18`, padding: "3px 9px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.03em" }}>
                           <StatusIcon size={11} /> {meta.label}
                         </span>
                       </td>
-                      <td className="mono" style={{ padding: "13px 16px", fontSize: "0.78rem", color: "#8a7a64" }}>
+                      <td className="mono" style={{ padding: "13px 16px", fontSize: "0.78rem", color: "var(--color-text-dim)" }}>
                         {r.receipt_id ? r.receipt_id.slice(0, 8) : "—"}
                       </td>
-                      <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "#4a3d2c" }}>{summarize(r)}</td>
+                      <td style={{ padding: "13px 16px", fontSize: "0.82rem", color: "var(--color-text)" }}>{summarize(r)}</td>
                     </motion.tr>
                   );
                 })

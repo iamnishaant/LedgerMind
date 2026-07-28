@@ -52,7 +52,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.inngest_app import inngest_client, INNGEST_FUNCTIONS
-from app.api.v1 import receipts, expenses, agents, health, chat, budgets, forecasts, gst, cfo, automations, audit, team, approvals, api_keys, export
+from app.api.v1 import receipts, expenses, agents, health, chat, budgets, forecasts, gst, cfo, automations, audit, team, approvals, api_keys, export, dashboard
 
 # Re-assert the level AFTER all imports above: one of these (PaddleOCR is the
 # known offender) calls logging.getLogger().setLevel(...) itself as an import
@@ -63,11 +63,31 @@ from app.api.v1 import receipts, expenses, agents, health, chat, budgets, foreca
 logging.getLogger().setLevel(logging.INFO)
 
 
+async def _warm_ocr_engine() -> None:
+    """Build the PaddleOCR engine once at boot, off the request path.
+
+    Engine construction imports heavy native code (and downloads model weights on
+    first ever run). Those hold the GIL, so doing it lazily on the first upload
+    stalls the event loop for seconds even though the OCR call itself now runs on
+    a worker thread. Warming here moves that cost to startup, where no request is
+    waiting. Failure is non-fatal — the engine is rebuilt lazily on first use.
+    """
+    try:
+        from app.agents.ocr_agent import get_ocr_engine
+        await asyncio.to_thread(get_ocr_engine)
+        print("🔎 OCR engine warmed")
+    except Exception:
+        logging.getLogger(__name__).exception("OCR engine warm-up failed (will retry lazily)")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle."""
     print(f"🚀 AI FinanceOS Backend starting — {settings.ENV} mode")
+    # Don't block readiness on it — the app can serve non-OCR traffic meanwhile.
+    warm = asyncio.create_task(_warm_ocr_engine())
     yield
+    warm.cancel()
     print("⏹  AI FinanceOS Backend shutting down")
 
 
@@ -94,6 +114,7 @@ app.add_middleware(
 
 # ── Routers ─────────────────────────────────────────────────
 app.include_router(health.router,    prefix="/api/v1",           tags=["Health"])
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboard"])
 app.include_router(receipts.router,  prefix="/api/v1/receipts",  tags=["Receipts"])
 app.include_router(expenses.router,  prefix="/api/v1/expenses",  tags=["Expenses"])
 app.include_router(agents.router,    prefix="/api/v1/agents",    tags=["Agents"])

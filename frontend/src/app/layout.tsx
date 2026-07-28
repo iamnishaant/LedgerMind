@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
+import AppProviders from "@/components/AppProviders";
+
+// Applied before first paint so the theme never flashes: honor a saved choice,
+// else fall back to the OS preference. Mirrors src/lib/theme.tsx (THEME_KEY).
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('lm.theme');if(t!=='dark'&&t!=='light'){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 // Monospace for tabular numerics — currency amounts, quantities, API keys.
@@ -22,7 +27,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} ${fraunces.variable} antialiased`}>{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+      </head>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} ${fraunces.variable} antialiased`}>
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }

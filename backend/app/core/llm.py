@@ -28,6 +28,11 @@ def get_chat_model(temperature: float = 0.0, model: str | None = None):
     """
     provider = settings.LLM_PROVIDER.lower()
 
+    # Fail fast instead of hanging forever, and ride out transient network blips
+    # with built-in exponential backoff (see config.py for the rationale).
+    timeout = settings.LLM_REQUEST_TIMEOUT
+    max_retries = settings.LLM_MAX_RETRIES
+
     if provider == "nvidia":
         # NVIDIA NIM is OpenAI-compatible → reuse ChatOpenAI with a custom base_url.
         from langchain_openai import ChatOpenAI
@@ -37,6 +42,8 @@ def get_chat_model(temperature: float = 0.0, model: str | None = None):
             api_key=settings.NVIDIA_API_KEY,
             base_url=settings.NVIDIA_BASE_URL,
             temperature=temperature,
+            timeout=timeout,
+            max_retries=max_retries,
         )
 
     if provider == "openai":
@@ -46,6 +53,8 @@ def get_chat_model(temperature: float = 0.0, model: str | None = None):
             model=model or settings.OPENAI_MODEL,
             api_key=settings.OPENAI_API_KEY,
             temperature=temperature,
+            timeout=timeout,
+            max_retries=max_retries,
         )
 
     # Default: Anthropic (langchain-anthropic is already a dependency)
@@ -56,6 +65,8 @@ def get_chat_model(temperature: float = 0.0, model: str | None = None):
         api_key=settings.ANTHROPIC_API_KEY,
         temperature=temperature,
         max_tokens=1024,
+        timeout=timeout,
+        max_retries=max_retries,
     )
 
 

@@ -14,6 +14,12 @@ router = APIRouter()
 
 @router.get("/brief")
 @limiter.limit("6/minute")
-async def get_cfo_brief(request: Request, business_id: str, user: dict = Depends(get_current_user)):
+async def get_cfo_brief(
+    request: Request,
+    business_id: str,
+    refresh: bool = False,
+    user: dict = Depends(get_current_user),
+):
+    """Cached by default (see BRIEF_TTL_SECONDS); `refresh=true` forces a rebuild."""
     ensure_owns_business(business_id, user["id"])
-    return await run_cfo_agent(business_id)
+    return await run_cfo_agent(business_id, refresh=refresh)

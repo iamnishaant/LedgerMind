@@ -130,10 +130,10 @@ export default function TeamPage() {
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
-            <Users size={24} color="#9c6b1f" /> Team
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text)", display: "flex", alignItems: "center", gap: 10 }}>
+            <Users size={24} color="var(--color-primary-glow)" /> Team
           </h1>
-          <p style={{ color: "#8a7a64", marginTop: 4 }}>Who has access to this business, and what they can do.</p>
+          <p style={{ color: "var(--color-text-dim)", marginTop: 4 }}>Who has access to this business, and what they can do.</p>
         </div>
         {isOwner && (
           <button className="btn-primary" onClick={invite} disabled={busy !== null}
@@ -164,14 +164,14 @@ export default function TeamPage() {
               background: "rgba(184,134,46,0.08)", border: "1px solid rgba(184,134,46,0.24)",
               display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
             }}>
-            <span style={{ fontSize: "0.8rem", color: "#6b5d49" }}>Share this link — it expires in 7 days:</span>
-            <code className="mono" style={{ flex: 1, minWidth: 200, fontSize: "0.78rem", color: "#9c6b1f", background: "rgba(184,134,46,0.08)", padding: "4px 8px", borderRadius: 6, overflowX: "auto" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Share this link — it expires in 7 days:</span>
+            <code className="mono" style={{ flex: 1, minWidth: 200, fontSize: "0.78rem", color: "var(--color-primary-glow)", background: "rgba(184,134,46,0.08)", padding: "4px 8px", borderRadius: 6, overflowX: "auto" }}>
               {newInviteUrl}
             </code>
             <button className="btn-ghost" onClick={copyLink} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78rem", padding: "6px 10px" }}>
-              {copied ? <Check size={13} color="#2f8f52" /> : <Copy size={13} />} {copied ? "Copied" : "Copy"}
+              {copied ? <Check size={13} color="var(--color-success)" /> : <Copy size={13} />} {copied ? "Copied" : "Copy"}
             </button>
-            <button onClick={() => setNewInviteUrl(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8a7a64" }}>
+            <button onClick={() => setNewInviteUrl(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-dim)" }}>
               <X size={15} />
             </button>
           </motion.div>
@@ -179,7 +179,7 @@ export default function TeamPage() {
       </AnimatePresence>
 
       {loading ? (
-        <div style={{ color: "#8a7a64", padding: 40, textAlign: "center" }}>Loading team…</div>
+        <div style={{ color: "var(--color-text-dim)", padding: 40, textAlign: "center" }}>Loading team…</div>
       ) : (
         <>
           <Stagger style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 26 }}>
@@ -195,16 +195,16 @@ export default function TeamPage() {
                     {initials(m.full_name, m.email)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#241c15", display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--color-text)", display: "flex", alignItems: "center", gap: 8 }}>
                       {m.full_name || m.email || "Unknown"}
-                      {m.user_id === userId && <span style={{ fontSize: "0.68rem", color: "#8a7a64", fontWeight: 400 }}>(you)</span>}
+                      {m.user_id === userId && <span style={{ fontSize: "0.68rem", color: "var(--color-text-dim)", fontWeight: 400 }}>(you)</span>}
                     </div>
-                    <div style={{ fontSize: "0.76rem", color: "#8a7a64" }}>{m.email}</div>
+                    <div style={{ fontSize: "0.76rem", color: "var(--color-text-dim)" }}>{m.email}</div>
                   </div>
                   <span style={{
                     display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.7rem", fontWeight: 700,
                     textTransform: "uppercase", letterSpacing: "0.04em",
-                    color: m.role === "owner" ? "#b9791c" : "#6b5d49",
+                    color: m.role === "owner" ? "#b9791c" : "var(--color-text-muted)",
                     background: m.role === "owner" ? "rgba(185,121,28,0.14)" : "rgba(107,93,73,0.1)",
                     padding: "4px 10px", borderRadius: 999,
                   }}>
@@ -225,7 +225,7 @@ export default function TeamPage() {
                         title="Remove from business"
                         style={{
                           background: "none", border: "1px solid rgba(178,58,46,0.25)", borderRadius: 8,
-                          padding: "6px 8px", cursor: "pointer", color: "#b23a2e", opacity: busy === m.id ? 0.6 : 1,
+                          padding: "6px 8px", cursor: "pointer", color: "var(--color-danger)", opacity: busy === m.id ? 0.6 : 1,
                         }}>
                         <Trash2 size={13} />
                       </button>
@@ -238,15 +238,15 @@ export default function TeamPage() {
 
           {isOwner && team && team.pending_invites.length > 0 && (
             <Reveal>
-              <h2 style={{ fontSize: "0.8rem", fontWeight: 700, color: "#8a7a64", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
+              <h2 style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--color-text-dim)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
                 Pending invites
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {team.pending_invites.map((inv) => (
                   <div key={inv.id} className="glass-card" style={{ padding: "11px 16px", display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>
-                    <Clock size={14} color="#b9791c" />
-                    <span style={{ fontSize: "0.82rem", color: "#6b5d49", flex: 1 }}>
-                      Invite for a <b style={{ color: "#4a3d2c" }}>{inv.role}</b> — expires {new Date(inv.expires_at).toLocaleDateString("en-IN")}
+                    <Clock size={14} color="var(--color-warning)" />
+                    <span style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", flex: 1 }}>
+                      Invite for a <b style={{ color: "var(--color-text)" }}>{inv.role}</b> — expires {new Date(inv.expires_at).toLocaleDateString("en-IN")}
                     </span>
                   </div>
                 ))}

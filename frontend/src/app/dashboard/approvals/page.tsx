@@ -96,10 +96,10 @@ export default function ApprovalsPage() {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <Reveal y={12} style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#241c15", display: "flex", alignItems: "center", gap: 10 }}>
-          <ShieldAlert size={24} color="#b9791c" /> Approvals
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text)", display: "flex", alignItems: "center", gap: 10 }}>
+          <ShieldAlert size={24} color="var(--color-warning)" /> Approvals
         </h1>
-        <p style={{ color: "#8a7a64", marginTop: 4 }}>
+        <p style={{ color: "var(--color-text-dim)", marginTop: 4 }}>
           Expenses the Fraud agent flagged as high risk, awaiting {isOwner ? "your" : "the owner's"} sign-off.
         </p>
       </Reveal>
@@ -120,9 +120,9 @@ export default function ApprovalsPage() {
       </AnimatePresence>
 
       {loading ? (
-        <div style={{ color: "#8a7a64", padding: 40, textAlign: "center" }}>Loading approvals…</div>
+        <div style={{ color: "var(--color-text-dim)", padding: 40, textAlign: "center" }}>Loading approvals…</div>
       ) : pending.length === 0 ? (
-        <div className="glass-card" style={{ padding: 40, textAlign: "center", color: "#8a7a64" }}>
+        <div className="glass-card" style={{ padding: 40, textAlign: "center", color: "var(--color-text-dim)" }}>
           Nothing awaiting approval right now.
         </div>
       ) : (
@@ -132,13 +132,13 @@ export default function ApprovalsPage() {
               <div className="glass-card" style={{ padding: "16px 18px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
                   <div>
-                    <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#241c15" }}>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--color-text)" }}>
                       {e.vendor_name ?? "Unknown vendor"}
-                      <span style={{ marginLeft: 8, fontSize: "0.75rem", fontWeight: 400, color: "#8a7a64" }}>
+                      <span style={{ marginLeft: 8, fontSize: "0.75rem", fontWeight: 400, color: "var(--color-text-dim)" }}>
                         {e.category ?? "Uncategorized"} · {e.expense_date}
                       </span>
                     </div>
-                    <div className="tabular" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#241c15", marginTop: 4, letterSpacing: "-0.01em" }}>
+                    <div className="tabular" style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--color-text)", marginTop: 4, letterSpacing: "-0.01em" }}>
                       ₹{e.amount.toLocaleString("en-IN")}
                     </div>
                   </div>
@@ -149,7 +149,7 @@ export default function ApprovalsPage() {
                         <Check size={14} /> Approve
                       </button>
                       <button className="btn-ghost" disabled={busy !== null} onClick={() => setRejecting(e.id)}
-                        style={{ display: "flex", alignItems: "center", gap: 6, color: "#b23a2e" }}>
+                        style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--color-danger)" }}>
                         <X size={14} /> Reject
                       </button>
                     </div>
@@ -159,7 +159,7 @@ export default function ApprovalsPage() {
                 {e.metadata?.fraud_reasons && e.metadata.fraud_reasons.length > 0 && (
                   <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
                     {e.metadata.fraud_reasons.map((r, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: "0.78rem", color: "#b9791c" }}>
+                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: "0.78rem", color: "var(--color-warning)" }}>
                         <AlertTriangle size={12} style={{ marginTop: 2, flexShrink: 0 }} /> {r}
                       </div>
                     ))}
@@ -173,8 +173,8 @@ export default function ApprovalsPage() {
                       onChange={(ev) => setReason(ev.target.value)}
                       placeholder="Reason (optional)"
                       style={{
-                        flex: 1, background: "#ffffff", border: "1px solid rgba(36,28,21,0.09)",
-                        borderRadius: 8, padding: "8px 12px", color: "#241c15", fontSize: "0.82rem", outline: "none",
+                        flex: 1, background: "var(--color-surface)", border: "1px solid var(--color-stroke)",
+                        borderRadius: 8, padding: "8px 12px", color: "var(--color-text)", fontSize: "0.82rem", outline: "none",
                       }}
                     />
                     <button className="btn-primary" disabled={busy !== null} onClick={() => reject(e.id)}

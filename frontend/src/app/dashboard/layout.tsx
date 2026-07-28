@@ -2,6 +2,11 @@ import { redirect } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { createClient } from "@/lib/supabase-server";
 import { BusinessProvider } from "@/lib/business-context";
+import { HelpProvider } from "@/lib/help/HelpProvider";
+import HelpButton from "@/components/help/HelpButton";
+import HelpPanel from "@/components/help/HelpPanel";
+import ProductTour from "@/components/help/ProductTour";
+import ProgressiveHint from "@/components/help/ProgressiveHint";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -42,17 +47,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
       businessName={businesses[0].name}
       accessToken={session.access_token}
     >
-      <div style={{ display: "flex", minHeight: "100vh" }}>
-        <Sidebar />
-        <main style={{
-          flex: 1,
-          padding: "32px",
-          overflowY: "auto",
-          background: "radial-gradient(ellipse at top left, rgba(184,134,46,0.06) 0%, transparent 60%)",
-        }}>
-          {children}
-        </main>
-      </div>
+      <HelpProvider>
+        <a href="#main-content" className="skip-link">Skip to content</a>
+        <div style={{ display: "flex", minHeight: "100vh" }}>
+          <Sidebar />
+          <main id="main-content" style={{
+            flex: 1,
+            padding: "32px",
+            overflowY: "auto",
+            background: "radial-gradient(ellipse at top left, rgba(184,134,46,0.06) 0%, transparent 60%)",
+          }}>
+            {children}
+          </main>
+        </div>
+
+        {/* Onboarding & contextual help (config-driven; see src/lib/help/content.ts) */}
+        <HelpButton />
+        <HelpPanel />
+        <ProductTour />
+        <ProgressiveHint />
+      </HelpProvider>
     </BusinessProvider>
   );
 }
