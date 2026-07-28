@@ -17,8 +17,19 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # Install deps first for better layer caching.
+#
+# paddleocr is deliberately NOT in requirements.txt: 2.7.3 pins
+# opencv-python<=4.6.0.66, which has no Python 3.11 wheel, so a normal resolve
+# fails. It is installed separately without deps — its real runtime deps
+# (opencv 4.10, shapely, pyclipper, …) are pinned in requirements.txt.
+#
+# That second install is REQUIRED. Without it the image builds cleanly but
+# `from paddleocr import PaddleOCR` raises at runtime and every receipt fails
+# at the OCR step.
 COPY requirements.txt ./
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt \
+    && pip install paddleocr==2.7.3 --no-deps
 
 # App source (see .dockerignore for what's excluded — .env, venv, tests, etc.).
 COPY . .
